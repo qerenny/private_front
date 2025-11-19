@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grizzly Gym | Train like a grizzly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body data-page="landing">
+  <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="assets/logo-grizzly-gym.png" alt="Grizzly Gym logo" class="me-2">
+        <span class="fw-bold text-uppercase">Grizzly Gym</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="workouts.html">Workouts</a></li>
+          <li class="nav-item"><a class="nav-link" href="#plans">Plans</a></li>
+          <li class="nav-item"><a class="nav-link" href="blog.html">Blog</a></li>
+          <li class="nav-item"><a class="nav-link" data-nav="dashboard" href="dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" data-nav="login" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link" data-nav="register" href="register.html">Register</a></li>
+          <li class="nav-item d-none"><a class="nav-link" data-nav="logout" href="#">Logout</a></li>
+          <li class="nav-item d-none"><span class="badge bg-warning text-dark" data-user-name></span></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-7">
+          <div class="hero__content">
+            <div class="hero__badge mb-3">Train like a grizzly</div>
+            <h1 class="display-4 fw-bold text-uppercase">Brutal. Precise. Powerful.</h1>
+            <p class="lead mt-3 mb-4">Grizzly Gym is your digital strength den – plans, workouts, progress and community, all in one brutal yet clean interface.</p>
+            <div class="d-flex hero__cta flex-wrap">
+              <a class="btn btn-brand-primary btn-lg" href="register.html">Start now</a>
+              <a class="btn btn-brand-outline btn-lg" href="login.html">Log in</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5 text-center mt-4 mt-lg-0">
+          <img src="assets/logo-grizzly-gym.png" alt="Grizzly bear logo" class="img-fluid" style="max-height: 260px;">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="py-5" id="plans">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2 class="section-title mb-0">Why Grizzly Gym</h2>
+        <p class="text-muted mb-0">Tools crafted for relentless athletes.</p>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6 col-lg-3 d-flex">
+          <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+            <span class="feature-card__icon"><i class="bi bi-activity"></i></span>
+            <h5 class="fw-bold">Smart workout plans</h5>
+            <p class="text-muted mb-0">Adaptive programming aligned with your goals.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3 d-flex">
+          <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+            <span class="feature-card__icon"><i class="bi bi-graph-up"></i></span>
+            <h5 class="fw-bold">Progress tracking</h5>
+            <p class="text-muted mb-0">Keep weight, steps, water and lifts in one vault.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3 d-flex">
+          <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+            <span class="feature-card__icon"><i class="bi bi-camera-video"></i></span>
+            <h5 class="fw-bold">Video workouts</h5>
+            <p class="text-muted mb-0">Coach-led sessions to perfect your form.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3 d-flex">
+          <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+            <span class="feature-card__icon"><i class="bi bi-heart-pulse"></i></span>
+            <h5 class="fw-bold">Health & nutrition</h5>
+            <p class="text-muted mb-0">Fuel and recovery guidance from pros.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5 bg-light">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2 class="section-title mb-0">Featured Workouts</h2>
+        <a class="btn btn-sm btn-brand-primary" href="workouts.html">Browse all</a>
+      </div>
+      <div id="workoutsPreview" class="preview-grid"></div>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2 class="section-title mb-0">From the blog</h2>
+        <a class="btn btn-sm btn-brand-primary" href="blog.html">View blog</a>
+      </div>
+      <div id="blogPreview" class="preview-grid"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center">
+      <p class="mb-0">© Grizzly Gym, 2025</p>
+      <div class="d-flex gap-3 small">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="mailto:hello@grizzlygym.com">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
