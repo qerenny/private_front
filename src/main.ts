@@ -204,7 +204,9 @@ function initDashboard(): void {
       const record = (rows || []).find((row) => String(row.user_id) === String(userId));
       if (!record) {
         if (progressContainer) {
-          progressContainer.innerHTML = '<p class="mb-2">No progress yet.</p><a class="btn btn-brand-primary" href="#">Create progress card</a>';
+          progressContainer.innerHTML = '<p class="mb-2">No progress yet.</p><button class="btn btn-brand-primary" type="button" id="createProgressBtn">Create progress plan</button>';
+          const createBtn = progressContainer.querySelector<HTMLButtonElement>('#createProgressBtn');
+          createBtn?.addEventListener('click', () => createProgressRecord(userId, progressContainer));
         }
         return;
       }
@@ -230,7 +232,12 @@ function initDashboard(): void {
       const listItems = await Promise.all(userPlans.map(async (p) => {
         try {
           const planInfo = await api.getTrainingPlan(p.training_plan_id);
-          return `<li class="list-group-item d-flex flex-column"><strong>${planInfo.title}</strong><small class="text-muted">${planInfo.description || ''}</small></li>`;
+          return `
+            <li class="list-group-item d-flex flex-column">
+              <strong>${planInfo.title}</strong>
+              <small class="text-muted">${planInfo.description || ''}</small>
+            </li>
+          `;
         } catch (e) {
           return `<li class="list-group-item">Plan #${p.training_plan_id}</li>`;
         }
@@ -242,6 +249,46 @@ function initDashboard(): void {
         trainingPlansContainer.innerHTML = '<p class="text-danger">Unable to load plans.</p>';
       }
     });
+}
+
+async function createProgressRecord(userId: string | number | undefined, container: HTMLElement | null): Promise<void> {
+  if (!container) return;
+  const alertBox = document.getElementById('progressAlert');
+  alertBox?.classList.add('d-none');
+  const numericUserId = Number(userId);
+  if (!Number.isFinite(numericUserId)) {
+    if (alertBox) {
+      alertBox.textContent = 'Unable to identify user for progress creation.';
+      alertBox.classList.remove('d-none');
+    }
+    return;
+  }
+
+  try {
+    const record = await api.createUserProgress({
+      user_id: numericUserId,
+      current_weight: 0,
+      target_weight: 0,
+      steps_walked: 0,
+      water_intake: 0,
+    });
+    renderProgress(record, container);
+    attachProgressForm(record.id);
+    if (alertBox) {
+      alertBox.textContent = 'Progress card created! Update it with your stats.';
+      alertBox.classList.remove('d-none');
+      alertBox.classList.remove('alert-danger');
+      alertBox.classList.add('alert-success');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to create progress record';
+    if (alertBox) {
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+      alertBox.classList.remove('alert-success');
+      alertBox.classList.add('alert-danger');
+    }
+  }
 }
 
 function attachProgressForm(progressId: number): void {

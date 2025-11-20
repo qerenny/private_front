@@ -13,7 +13,7 @@ export class UserTrainingPlanService extends BaseService<UserTrainingPlan> {
   }
 
   async findAllWithRelations() {
-    const list = await this.repository.find({ relations: ["training_plan"] });
+    const list = await this.repository.find();
     return await Promise.all(
       list.map(async (item) => {
         const user = await this.fetchUser(item.user_id);
@@ -23,7 +23,7 @@ export class UserTrainingPlanService extends BaseService<UserTrainingPlan> {
   }
 
   async findOneWithRelations(id: number) {
-    const item = await this.repository.findOne({ where: { id }, relations: ["training_plan"] });
+    const item = await this.repository.findOne({ where: { id } });
     if (!item) return null;
 
     const user = await this.fetchUser(item.user_id);
