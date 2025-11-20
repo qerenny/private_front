@@ -1,8 +1,8 @@
-const AUTH_API_URL = window.AUTH_API_URL || 'https://api.example.com/auth';
-const WORKOUT_API_URL = window.WORKOUT_API_URL || 'https://api.example.com/workouts';
-const BLOG_API_URL = window.BLOG_API_URL || 'https://api.example.com/blog';
-const PROGRESS_API_URL = window.PROGRESS_API_URL || 'https://api.example.com/progress';
-const ORDER_API_URL = window.ORDER_API_URL || 'https://api.example.com/orders';
+const AUTH_API_URL = window.AUTH_API_URL || 'http://localhost:4000';
+const WORKOUT_API_URL = window.WORKOUT_API_URL || 'http://localhost:4001';
+const BLOG_API_URL = window.BLOG_API_URL || 'http://localhost:4004';
+const PROGRESS_API_URL = window.PROGRESS_API_URL || 'http://localhost:4002';
+const ORDER_API_URL = window.ORDER_API_URL || 'http://localhost:4003';
 
 function getAuthToken() {
   return localStorage.getItem('authToken');
