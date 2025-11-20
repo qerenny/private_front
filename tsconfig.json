@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "ES2015",
+    "outDir": "./js",
+    "rootDir": "./src",
+    "strict": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "lib": ["DOM", "ES2019"],
+    "removeComments": false
+  },
+  "include": ["src/**/*"]
+}
