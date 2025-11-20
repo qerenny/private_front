@@ -3,6 +3,8 @@ import { User } from "../entities/User";
 import { hashPassword } from "../utils/hashPassword";
 
 export class UserService extends BaseService<User> {
+  private static readonly DEFAULT_ROLE_ID = 2;
+
   constructor() {
     super(User);
   }
@@ -20,9 +22,12 @@ export class UserService extends BaseService<User> {
   }
 
   override async create(data: Partial<User>) {
+    const role_id = data.role_id ?? UserService.DEFAULT_ROLE_ID;
+
     const user = this.repository.create({
       ...data,
-      password_hash: hashPassword(data.password_hash || ""), 
+      role_id,
+      password_hash: hashPassword(data.password_hash || ""),
     });
     return this.repository.save(user);
   }
