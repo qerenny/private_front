@@ -144,6 +144,13 @@ async function getUserProgress(): Promise<UserProgress[]> {
   return apiFetch<UserProgress[]>(`${PROGRESS_API_URL}/user-progress/`, {}, true);
 }
 
+async function createUserProgress(payload: Partial<UserProgress>): Promise<UserProgress> {
+  return apiFetch<UserProgress>(`${PROGRESS_API_URL}/user-progress/`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, true);
+}
+
 async function updateUserProgress(id: string | number, payload: Partial<UserProgress>): Promise<unknown> {
   return apiFetch(`${PROGRESS_API_URL}/user-progress/${id}`, {
     method: 'PATCH',
@@ -175,6 +182,7 @@ declare global {
       getBlogPost: typeof getBlogPost;
       createBlogComment: typeof createBlogComment;
       getUserProgress: typeof getUserProgress;
+      createUserProgress: typeof createUserProgress;
       updateUserProgress: typeof updateUserProgress;
       getUserTrainingPlans: typeof getUserTrainingPlans;
       addUserTrainingPlan: typeof addUserTrainingPlan;
@@ -200,6 +208,7 @@ window.GrizzlyApi = {
   getBlogPost,
   createBlogComment,
   getUserProgress,
+  createUserProgress,
   updateUserProgress,
   getUserTrainingPlans,
   addUserTrainingPlan,
