@@ -11,6 +11,7 @@ function setupNavbar() {
     const dashboardLink = document.querySelector('[data-nav="dashboard"]');
     const logoutLink = document.querySelector('[data-nav="logout"]');
     const userNameBadge = document.querySelector('[data-user-name]');
+    const guestOnlyElements = document.querySelectorAll('[data-guest-only]');
     if (token) {
         loginLink === null || loginLink === void 0 ? void 0 : loginLink.classList.add('d-none');
         registerLink === null || registerLink === void 0 ? void 0 : registerLink.classList.add('d-none');
@@ -24,6 +25,7 @@ function setupNavbar() {
             e.preventDefault();
             logout();
         });
+        guestOnlyElements.forEach((el) => el.classList.add('d-none'));
     }
     else {
         loginLink === null || loginLink === void 0 ? void 0 : loginLink.classList.remove('d-none');
@@ -31,6 +33,7 @@ function setupNavbar() {
         dashboardLink === null || dashboardLink === void 0 ? void 0 : dashboardLink.classList.add('d-none');
         logoutLink === null || logoutLink === void 0 ? void 0 : logoutLink.classList.add('d-none');
         userNameBadge === null || userNameBadge === void 0 ? void 0 : userNameBadge.classList.add('d-none');
+        guestOnlyElements.forEach((el) => el.classList.remove('d-none'));
     }
 }
 function routeInit() {
@@ -99,6 +102,11 @@ function getFormValue(form, name) {
     return ((_a = control === null || control === void 0 ? void 0 : control.value) !== null && _a !== void 0 ? _a : '').trim();
 }
 function initLogin() {
+    const { token } = getAuthData();
+    if (token) {
+        window.location.replace('dashboard.html');
+        return;
+    }
     const form = document.getElementById('loginForm');
     const alertBox = document.getElementById('loginAlert');
     form === null || form === void 0 ? void 0 : form.addEventListener('submit', async (e) => {
@@ -131,6 +139,11 @@ function initLogin() {
     });
 }
 function initRegister() {
+    const { token } = getAuthData();
+    if (token) {
+        window.location.replace('dashboard.html');
+        return;
+    }
     const form = document.getElementById('registerForm');
     const alertBox = document.getElementById('registerAlert');
     form === null || form === void 0 ? void 0 : form.addEventListener('submit', async (e) => {
@@ -495,7 +508,8 @@ function initBlogPost() {
         const alertBox = document.getElementById('commentAlert');
         alertBox === null || alertBox === void 0 ? void 0 : alertBox.classList.add('d-none');
         try {
-            await api.createBlogComment({ post_id: Number(id), user_id: Number(userId), comment_text: text, user_name: userName || undefined });
+            const commentAuthor = userName || getAuthData().userEmail || undefined;
+            await api.createBlogComment({ post_id: Number(id), user_id: Number(userId), comment_text: text, user_name: commentAuthor });
             commentForm.reset();
             const post = await api.getBlogPost(id);
             renderComments(post.comments || [], commentsContainer);
