@@ -1,17 +1,23 @@
-import { IsString, IsEmail, IsOptional, IsDateString, IsDate, IsNumber } from "class-validator";
-import { Type } from "class-transformer";
+import { IsString, IsEmail, IsOptional, IsDateString, IsEnum, IsNumber } from "class-validator";
+import { Transform, Type } from "class-transformer";
+
+export enum Gender {
+  Male = "male",
+  Female = "female",
+  Other = "other",
+}
 
 export class CreateUserDto {
   @IsString()
-    @Type(() => String)
+  @Type(() => String)
   name: string;
 
   @IsEmail()
-    @Type(() => String)
+  @Type(() => String)
   email: string;
 
   @IsString()
-    @Type(() => String)
+  @Type(() => String)
   password_hash: string;
 
   @IsOptional()
@@ -20,8 +26,10 @@ export class CreateUserDto {
   date_of_birth?: Date;
 
   @IsOptional()
-    @Type(() => String)
-  gender?: string;
+  @IsEnum(Gender)
+  @Transform(({ value }) => (value === "" ? undefined : value))
+  @Type(() => String)
+  gender?: Gender;
 
   @IsOptional()
   @IsNumber()

@@ -9,7 +9,7 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column("int")
+  @Column("int", { default: 2 })
   role_id: number
 
   @ManyToOne(() => Role, (role) => role.users)
