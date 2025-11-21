@@ -22,6 +22,14 @@ body {
   background-color: var(--color-dark);
 }
 
+.navbar-custom .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.navbar-custom .navbar-toggler-icon {
+  filter: invert(1);
+}
+
 .navbar-custom .nav-link,
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text {
