@@ -237,7 +237,7 @@ function initDashboard(): void {
         try {
           const planInfo = await api.getTrainingPlan(p.training_plan_id);
           const planTitle = getPlanTitle(planInfo, p.training_plan_id);
-          const planDescription = typeof planInfo.description === 'string' ? planInfo.description : 'No description available.';
+          const planDescription = getPlanDescription(planInfo);
           return `
             <li class="list-group-item d-flex flex-column">
               <strong>${planTitle}</strong>
@@ -248,7 +248,17 @@ function initDashboard(): void {
             </li>
           `;
         } catch (e) {
-          return `<li class="list-group-item">Plan #${p.training_plan_id}</li>`;
+          const fallbackTitle = getPlanTitle(p as { title?: unknown; plan_name?: string; name?: string }, p.training_plan_id);
+          const fallbackDescription = getPlanDescription(p as { description?: unknown; training_plan?: { description?: unknown } });
+          return `
+            <li class="list-group-item d-flex flex-column">
+              <strong>${fallbackTitle}</strong>
+              <small class="text-muted">${fallbackDescription}</small>
+              <div class="mt-2 d-flex gap-2">
+                <span class="badge bg-light text-dark">Plan #${p.training_plan_id}</span>
+              </div>
+            </li>
+          `;
         }
       }));
       trainingPlansContainer.innerHTML = `<ul class="list-group list-group-flush">${listItems.join('')}</ul>`;
@@ -438,7 +448,7 @@ function renderProgress(record: { current_weight?: number; target_weight?: numbe
 
 function renderProgressHistory(records: UserProgress[], container: HTMLElement | null, liveRecordId?: number): void {
   if (!container) return;
-  const historyRecords = records.filter((record) => record.id !== liveRecordId).slice(0, 7);
+  const historyRecords = records.slice(0, 7);
   if (!historyRecords.length) {
     container.innerHTML = '<p class="text-muted small mb-0">No previous updates yet.</p>';
     return;
@@ -446,9 +456,11 @@ function renderProgressHistory(records: UserProgress[], container: HTMLElement |
   const items = historyRecords
     .map((record) => {
       const friendlyDate = formatProgressDateTime(record.updated_at || record.created_at);
+      const isLatest = liveRecordId !== undefined && record.id === liveRecordId;
+      const badge = isLatest ? '<span class="badge bg-dark ms-2">Latest</span>' : '';
       return `
         <li class="d-flex justify-content-between align-items-center py-1 border-bottom small">
-          <span class="text-muted">${friendlyDate}</span>
+          <span class="text-muted">${friendlyDate}${badge}</span>
           <span class="fw-semibold">${record.current_weight ?? '-'} kg · ${record.steps_walked ?? 0} steps</span>
         </li>
       `;
@@ -463,12 +475,31 @@ function renderProgressHistory(records: UserProgress[], container: HTMLElement |
   `;
 }
 
-function getPlanTitle(planInfo: { title?: unknown; plan_name?: string; name?: string; workout?: { title?: string } }, id: number | string): string {
+function getPlanTitle(planInfo: { title?: unknown; plan_name?: string; name?: string; workout?: { title?: string }; training_plan?: { title?: string; plan_name?: string; name?: string } }, id: number | string): string {
+  if (planInfo && typeof planInfo === 'object' && 'training_plan' in planInfo) {
+    const nested = (planInfo as { training_plan?: { title?: string; plan_name?: string; name?: string } }).training_plan;
+    if (nested) {
+      const nestedTitle = getPlanTitle(nested, id);
+      if (nestedTitle) return nestedTitle;
+    }
+  }
   if (typeof planInfo.plan_name === 'string') return planInfo.plan_name;
   if (typeof planInfo.title === 'string') return planInfo.title;
   if (typeof planInfo.name === 'string') return planInfo.name;
   if (typeof planInfo?.workout?.title === 'string') return planInfo.workout.title;
   return `Plan #${id}`;
+}
+
+function getPlanDescription(planInfo: { description?: unknown; training_plan?: { description?: unknown } }): string {
+  if (planInfo && typeof planInfo === 'object' && 'training_plan' in planInfo) {
+    const nested = (planInfo as { training_plan?: { description?: unknown } }).training_plan;
+    if (nested) {
+      const nestedDescription = getPlanDescription(nested);
+      if (nestedDescription) return nestedDescription;
+    }
+  }
+  if (typeof planInfo.description === 'string' && planInfo.description.trim()) return planInfo.description.trim();
+  return 'No description available.';
 }
 
 async function isPlanAlreadySelected(planId: string | number, userId: string | number | null): Promise<boolean> {
