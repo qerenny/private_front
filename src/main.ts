@@ -1,4 +1,4 @@
-import type { BlogComment, BlogPost, Workout } from './api';
+import type { BlogComment, BlogPost, UserProgress, Workout } from './api';
 
 const { getAuthData, logout, requireAuth } = window.GrizzlyAuth;
 const api = window.GrizzlyApi;
@@ -17,12 +17,16 @@ function setupNavbar(): void {
   const dashboardLink = document.querySelector<HTMLAnchorElement>('[data-nav="dashboard"]');
   const logoutLink = document.querySelector<HTMLAnchorElement>('[data-nav="logout"]');
   const userNameBadge = document.querySelector<HTMLElement>('[data-user-name]');
+  const guestOnlyElements = document.querySelectorAll<HTMLElement>('[data-guest-only]');
+  const authOnlyElements = document.querySelectorAll<HTMLElement>('[data-auth-only]');
 
   if (token) {
     loginLink?.classList.add('d-none');
     registerLink?.classList.add('d-none');
     dashboardLink?.classList.remove('d-none');
     logoutLink?.classList.remove('d-none');
+    guestOnlyElements.forEach((el) => el.classList.add('d-none'));
+    authOnlyElements.forEach((el) => el.classList.remove('d-none'));
     if (userNameBadge) {
       userNameBadge.textContent = userName || 'Athlete';
       userNameBadge.classList.remove('d-none');
@@ -37,6 +41,8 @@ function setupNavbar(): void {
     dashboardLink?.classList.add('d-none');
     logoutLink?.classList.add('d-none');
     userNameBadge?.classList.add('d-none');
+    guestOnlyElements.forEach((el) => el.classList.remove('d-none'));
+    authOnlyElements.forEach((el) => el.classList.add('d-none'));
   }
 }
 
@@ -197,29 +203,10 @@ function initDashboard(): void {
   }
 
   const progressContainer = document.getElementById('progressContainer');
+  const progressHistoryContainer = document.getElementById('progressHistory');
   const trainingPlansContainer = document.getElementById('trainingPlansContainer');
 
-  api.getUserProgress()
-    .then((rows) => {
-      const record = (rows || []).find((row) => String(row.user_id) === String(userId));
-      if (!record) {
-        if (progressContainer) {
-          progressContainer.innerHTML = '<p class="mb-2">No progress yet.</p><button class="btn btn-brand-primary" type="button" id="createProgressBtn">Create progress plan</button>';
-          const createBtn = progressContainer.querySelector<HTMLButtonElement>('#createProgressBtn');
-          createBtn?.addEventListener('click', () => createProgressRecord(userId ?? undefined, progressContainer));
-        }
-        return;
-      }
-      if (progressContainer) {
-        renderProgress(record, progressContainer);
-      }
-      attachProgressForm(record.id);
-    })
-    .catch(() => {
-      if (progressContainer) {
-        progressContainer.innerHTML = '<p class="text-danger">Unable to load progress.</p>';
-      }
-    });
+  loadProgress(userId, progressContainer, progressHistoryContainer);
 
   api.getUserTrainingPlans()
     .then(async (plans) => {
@@ -232,12 +219,15 @@ function initDashboard(): void {
       const listItems = await Promise.all(userPlans.map(async (p) => {
         try {
           const planInfo = await api.getTrainingPlan(p.training_plan_id);
-          const planTitle = planInfo.title || planInfo.plan_name || `Plan #${p.training_plan_id}`;
-          const planDescription = planInfo.description || 'No description available.';
+          const planTitle = getPlanTitle(planInfo, p.training_plan_id);
+          const planDescription = typeof planInfo.description === 'string' ? planInfo.description : 'No description available.';
           return `
             <li class="list-group-item d-flex flex-column">
               <strong>${planTitle}</strong>
               <small class="text-muted">${planDescription}</small>
+              <div class="mt-2 d-flex gap-2">
+                <a class="btn btn-sm btn-brand-primary" href="workout.html?id=${p.training_plan_id}">View plan</a>
+              </div>
             </li>
           `;
         } catch (e) {
@@ -253,7 +243,62 @@ function initDashboard(): void {
     });
 }
 
-async function createProgressRecord(userId: string | number | undefined, container: HTMLElement | null): Promise<void> {
+function loadProgress(
+  userId: string | number | null,
+  container: HTMLElement | null,
+  historyContainer: HTMLElement | null,
+): void {
+  api.getUserProgress()
+    .then((rows) => {
+      const userRows = filterUserProgress(rows, userId);
+      const sorted = sortProgressRecords(userRows);
+      const latest = sorted[0];
+      if (!latest) {
+        if (container) {
+          container.innerHTML = '<p class="mb-2">No progress yet.</p><button class="btn btn-brand-primary" type="button" id="createProgressBtn">Create progress plan</button>';
+          const createBtn = container.querySelector<HTMLButtonElement>('#createProgressBtn');
+          createBtn?.addEventListener('click', () => createProgressRecord(userId ?? undefined, container, historyContainer));
+        }
+        if (historyContainer) {
+          historyContainer.innerHTML = '<p class="text-muted small mb-0">No previous updates yet.</p>';
+        }
+        return;
+      }
+      if (container) {
+        renderProgress(latest, container);
+      }
+      renderProgressHistory(sorted, historyContainer);
+      attachProgressForm(latest.id, userId, container, historyContainer);
+    })
+    .catch(() => {
+      if (container) {
+        container.innerHTML = '<p class="text-danger">Unable to load progress.</p>';
+      }
+      if (historyContainer) {
+        historyContainer.innerHTML = '<p class="text-danger">Unable to load progress history.</p>';
+      }
+    });
+}
+
+function filterUserProgress(rows: UserProgress[] | null | undefined, userId: string | number | null): UserProgress[] {
+  return (rows || []).filter((row) => String(row.user_id) === String(userId));
+}
+
+function getProgressTimestamp(record: UserProgress): number {
+  const dateValue = record.updated_at || record.created_at;
+  const parsed = dateValue ? new Date(dateValue).getTime() : 0;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function sortProgressRecords(records: UserProgress[]): UserProgress[] {
+  return [...records].sort((a, b) => getProgressTimestamp(b) - getProgressTimestamp(a));
+}
+
+async function createProgressRecord(
+  userId: string | number | undefined,
+  container: HTMLElement | null,
+  historyContainer: HTMLElement | null,
+): Promise<void> {
   if (!container) return;
   const alertBox = document.getElementById('progressAlert');
   alertBox?.classList.add('d-none');
@@ -275,7 +320,8 @@ async function createProgressRecord(userId: string | number | undefined, contain
       water_intake: 0,
     });
     renderProgress(record, container);
-    attachProgressForm(record.id);
+    renderProgressHistory([record], historyContainer);
+    attachProgressForm(record.id, userId, container, historyContainer);
     if (alertBox) {
       alertBox.textContent = 'Progress card created! Update it with your stats.';
       alertBox.classList.remove('d-none');
@@ -293,11 +339,16 @@ async function createProgressRecord(userId: string | number | undefined, contain
   }
 }
 
-function attachProgressForm(progressId: number): void {
+function attachProgressForm(
+  progressId: number,
+  userId?: string | number | null,
+  container?: HTMLElement | null,
+  historyContainer?: HTMLElement | null,
+): void {
   const form = document.getElementById('progressForm') as HTMLFormElement | null;
   if (!form) return;
   form.classList.remove('d-none');
-  form.addEventListener('submit', async (e) => {
+  form.onsubmit = async (e) => {
     e.preventDefault();
     const payload = {
       current_weight: Number(getFormValue(form, 'current_weight')),
@@ -314,6 +365,9 @@ function attachProgressForm(progressId: number): void {
         alertBox.classList.remove('d-none');
         alertBox.classList.add('alert-success');
       }
+      if (userId !== undefined) {
+        loadProgress(userId ?? null, container ?? null, historyContainer ?? null);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update progress';
       if (alertBox) {
@@ -321,7 +375,7 @@ function attachProgressForm(progressId: number): void {
         alertBox.classList.remove('d-none');
       }
     }
-  });
+  };
 }
 
 function renderProgress(record: { current_weight?: number; target_weight?: number; steps_walked?: number; water_intake?: number }, container: HTMLElement): void {
@@ -351,12 +405,89 @@ function renderProgress(record: { current_weight?: number; target_weight?: numbe
   `;
 }
 
+function renderProgressHistory(records: UserProgress[], container: HTMLElement | null): void {
+  if (!container) return;
+  const topRecords = records.slice(0, 7);
+  if (!topRecords.length) {
+    container.innerHTML = '<p class="text-muted small mb-0">No previous updates yet.</p>';
+    return;
+  }
+  const items = topRecords
+    .map((record) => {
+      const dateLabel = record.updated_at || record.created_at;
+      const friendlyDate = dateLabel ? new Date(dateLabel).toLocaleDateString() : '—';
+      return `
+        <li class="d-flex justify-content-between align-items-center py-1 border-bottom small">
+          <span class="text-muted">${friendlyDate}</span>
+          <span class="fw-semibold">${record.current_weight ?? '-'} kg · ${record.steps_walked ?? 0} steps</span>
+        </li>
+      `;
+    })
+    .join('');
+
+  container.innerHTML = `
+    <div class="mt-3">
+      <h6 class="fw-bold mb-2">Recent updates</h6>
+      <ul class="list-unstyled mb-0">${items}</ul>
+    </div>
+  `;
+}
+
+function getPlanTitle(planInfo: { title?: unknown; plan_name?: string; name?: string; workout?: { title?: string } }, id: number | string): string {
+  if (typeof planInfo.plan_name === 'string') return planInfo.plan_name;
+  if (typeof planInfo.title === 'string') return planInfo.title;
+  if (typeof planInfo.name === 'string') return planInfo.name;
+  if (typeof planInfo?.workout?.title === 'string') return planInfo.workout.title;
+  return `Plan #${id}`;
+}
+
+async function isPlanAlreadySelected(planId: string | number, userId: string | number | null): Promise<boolean> {
+  const { token } = getAuthData();
+  if (!token) return false;
+  try {
+    const plans = await api.getUserTrainingPlans();
+    return (plans || []).some(
+      (plan) => String(plan.user_id) === String(userId) && String(plan.training_plan_id) === String(planId),
+    );
+  } catch (err) {
+    return false;
+  }
+}
+
+function formatPersonName(value: unknown, fallback: string): string {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (value && typeof value === 'object') {
+    const candidate = (value as { name?: string; fullName?: string; username?: string }).name
+      || (value as { name?: string; fullName?: string; username?: string }).fullName
+      || (value as { name?: string; fullName?: string; username?: string }).username;
+    if (candidate && candidate.trim()) return candidate;
+  }
+  return fallback;
+}
+
+function getPostContentText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (content && typeof content === 'object' && 'text' in content && typeof (content as { text?: string }).text === 'string') {
+    return (content as { text?: string }).text ?? '';
+  }
+  return '';
+}
+
+function getPostPreview(content: unknown): string {
+  const text = getPostContentText(content).trim();
+  if (!text) return 'Read the full story inside.';
+  const snippet = text.slice(0, 120);
+  return snippet.length < text.length ? `${snippet}...` : snippet;
+}
+
 function initWorkouts(): void {
   const grid = document.getElementById('workoutsGrid');
   const levelSelect = document.getElementById('filterLevel') as HTMLSelectElement | null;
   const typeSelect = document.getElementById('filterType') as HTMLSelectElement | null;
   const durationSelect = document.getElementById('filterDuration') as HTMLSelectElement | null;
   let workoutsData: Workout[] = [];
+  const { userId, token } = getAuthData();
+  let selectedPlanIds = new Set<number>();
 
   const debounce = (fn: (...args: unknown[]) => void, wait = 200) => {
     let timeout: number | undefined;
@@ -382,26 +513,46 @@ function initWorkouts(): void {
       })();
       return matchLevel && matchType && matchDuration;
     });
-    renderWorkoutCards(filtered, grid);
+    const filteredWithoutSelected = filtered.filter((w) => !selectedPlanIds.has(Number(w.id)));
+    renderWorkoutCards(filteredWithoutSelected, grid);
   };
 
   [levelSelect, typeSelect, durationSelect].forEach((el) => {
     el?.addEventListener('change', debounce(applyFilters));
   });
 
-  api.getWorkouts()
-    .then((data) => {
+  const loadSelectedPlans = async () => {
+    if (!token) return;
+    try {
+      const plans = await api.getUserTrainingPlans();
+      selectedPlanIds = new Set(
+        (plans || [])
+          .filter((plan) => String(plan.user_id) === String(userId))
+          .map((plan) => Number(plan.training_plan_id))
+          .filter((id) => Number.isFinite(id)),
+      );
+    } catch (err) {
+      selectedPlanIds = new Set<number>();
+    }
+  };
+
+  const loadWorkouts = async () => {
+    try {
+      await loadSelectedPlans();
+      const data = await api.getWorkouts();
       workoutsData = Array.isArray(data) ? data : [];
-      renderWorkoutCards(workoutsData, grid);
-    })
-    .catch(() => {
+      applyFilters();
+    } catch (error) {
       workoutsData = [
         { id: 1, title: 'Quick Cardio', level: 'beginner', workout_type: 'cardio', duration_min: 18, description: 'Fast fat-burner' },
         { id: 2, title: 'Barbell Strength', level: 'advanced', workout_type: 'strength', duration_min: 50, description: 'Compound lifts' },
         { id: 3, title: 'Stretch & Flex', level: 'intermediate', workout_type: 'flexibility', duration_min: 30, description: 'Mobility focus' },
       ];
-      renderWorkoutCards(workoutsData, grid);
-    });
+      applyFilters();
+    }
+  };
+
+  loadWorkouts();
 }
 
 function renderWorkoutCards(list: Workout[], container: HTMLElement | null): void {
@@ -439,7 +590,7 @@ function renderBlogCards(list: BlogPost[], container: HTMLElement | null): void 
         <div class="card-body d-flex flex-column">
           <h5 class="card-title card-tag--accent">${post.title}</h5>
           <p class="card-text text-muted small">${new Date(post.created_at || Date.now()).toLocaleDateString()}</p>
-          <p class="card-text flex-grow-1">${(post.content || '').slice(0, 120)}...</p>
+          <p class="card-text flex-grow-1">${getPostPreview(post.content)}</p>
           <a class="btn btn-sm btn-brand-primary mt-auto align-self-start" href="blog-post.html?id=${post.id}">Read more</a>
         </div>
       </div>
@@ -465,6 +616,15 @@ function initWorkoutDetail(): void {
     ctaButton?.classList.add('d-none');
   }
 
+  const checkIfAlreadySelected = async () => {
+    if (!ctaButton) return;
+    const alreadyAdded = await isPlanAlreadySelected(id, userId);
+    if (alreadyAdded) {
+      ctaButton.textContent = 'Already in your plans';
+      ctaButton.disabled = true;
+    }
+  };
+
   api.getWorkout(id)
     .then((workout) => renderWorkoutDetail(workout, container))
     .catch(() => {
@@ -472,6 +632,8 @@ function initWorkoutDetail(): void {
         container.innerHTML = '<p class="text-danger">Could not load workout details.</p>';
       }
     });
+
+  checkIfAlreadySelected();
 
   ctaButton?.addEventListener('click', async () => {
     if (!token) {
@@ -530,7 +692,7 @@ function initBlogPost(): void {
   const container = document.getElementById('blogPost');
   const commentsContainer = document.getElementById('commentsList');
   const commentForm = document.getElementById('commentForm') as HTMLFormElement | null;
-  const { userId, token, userName } = getAuthData();
+  const { userId, token, userName, userEmail } = getAuthData();
 
   if (!id) {
     if (container) container.innerHTML = '<p class="text-danger">Post not found.</p>';
@@ -557,7 +719,8 @@ function initBlogPost(): void {
     const alertBox = document.getElementById('commentAlert');
     alertBox?.classList.add('d-none');
     try {
-      await api.createBlogComment({ post_id: Number(id), user_id: Number(userId), comment_text: text, user_name: userName || undefined });
+      const displayName = userName || userEmail || 'Athlete';
+      await api.createBlogComment({ post_id: Number(id), user_id: Number(userId), comment_text: text, user_name: displayName });
       commentForm.reset();
       const post = await api.getBlogPost(id);
       renderComments(post.comments || [], commentsContainer);
@@ -573,13 +736,15 @@ function initBlogPost(): void {
 
 function renderBlogPost(post: BlogPost, container: HTMLElement | null): void {
   if (!container) return;
+  const authorName = formatPersonName(post.author, 'Grizzly Coach');
+  const contentText = getPostContentText(post.content) || 'No content provided.';
   container.innerHTML = `
     <div class="card">
       <div class="card-body">
         <span class="card-tag card-tag--accent mb-2">${new Date(post.created_at || Date.now()).toLocaleDateString()}</span>
         <h2 class="section-title">${post.title}</h2>
-        <p class="text-muted">${post.author || 'Grizzly Coach'}</p>
-        <p>${post.content}</p>
+        <p class="text-muted">${authorName}</p>
+        <p>${contentText}</p>
       </div>
     </div>
   `;
@@ -595,7 +760,7 @@ function renderComments(comments: BlogComment[], container: HTMLElement | null):
     .map((c) => `
       <div class="comment-box mb-2">
         <div class="d-flex justify-content-between align-items-center mb-1">
-          <strong>${c.user_name || c.user || 'Athlete'}</strong>
+          <strong>${formatPersonName(c.user_name ?? c.user, 'Athlete')}</strong>
           <small class="text-muted">${new Date(c.created_at || Date.now()).toLocaleDateString()}</small>
         </div>
         <p class="mb-0">${c.comment_text}</p>

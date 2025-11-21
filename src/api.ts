@@ -59,6 +59,8 @@ export interface UserProgress {
   target_weight?: number;
   steps_walked?: number;
   water_intake?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface UserTrainingPlan {
