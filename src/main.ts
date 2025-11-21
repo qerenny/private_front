@@ -448,7 +448,10 @@ function renderProgress(record: { current_weight?: number; target_weight?: numbe
 
 function renderProgressHistory(records: UserProgress[], container: HTMLElement | null, liveRecordId?: number): void {
   if (!container) return;
-  const historyRecords = records.slice(0, 7);
+  const historyRecords = [...records]
+    .filter((record) => (liveRecordId === undefined ? true : record.id !== liveRecordId))
+    .sort((a, b) => getProgressTimestamp(b) - getProgressTimestamp(a))
+    .slice(0, 7);
   if (!historyRecords.length) {
     container.innerHTML = '<p class="text-muted small mb-0">No previous updates yet.</p>';
     return;
