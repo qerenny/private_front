@@ -1,9 +1,20 @@
-import type { BlogComment, BlogPost, UserProgress, Workout } from './api';
+import type { BlogComment, BlogPost, TrainingPlan, TrainingPlanWorkout, UserProgress, Workout } from './api';
 
 const { getAuthData, logout, requireAuth } = window.GrizzlyAuth;
 const api = window.GrizzlyApi;
 
-type PageName = 'landing' | 'login' | 'register' | 'dashboard' | 'workouts' | 'workout-detail' | 'blog' | 'blog-post' | undefined;
+type PageName =
+  | 'landing'
+  | 'login'
+  | 'register'
+  | 'dashboard'
+  | 'workouts'
+  | 'workout-detail'
+  | 'training-plans'
+  | 'training-plan-detail'
+  | 'blog'
+  | 'blog-post'
+  | undefined;
 
 document.addEventListener('DOMContentLoaded', () => {
   setupNavbar();
@@ -67,6 +78,12 @@ function routeInit(): void {
       break;
     case 'workout-detail':
       initWorkoutDetail();
+      break;
+    case 'training-plans':
+      initTrainingPlans();
+      break;
+    case 'training-plan-detail':
+      initTrainingPlanDetail();
       break;
     case 'blog':
       initBlog();
@@ -226,7 +243,7 @@ function initDashboard(): void {
               <strong>${planTitle}</strong>
               <small class="text-muted">${planDescription}</small>
               <div class="mt-2 d-flex gap-2">
-                <a class="btn btn-sm btn-brand-primary" href="workout.html?id=${p.training_plan_id}">View plan</a>
+                <a class="btn btn-sm btn-brand-primary" href="training-plan.html?id=${p.training_plan_id}">View plan</a>
               </div>
             </li>
           `;
@@ -267,7 +284,7 @@ function loadProgress(
       if (container) {
         renderProgress(latest, container);
       }
-      renderProgressHistory(sorted, historyContainer);
+      renderProgressHistory(sorted, historyContainer, latest?.id);
       attachProgressForm(latest.id, userId, container, historyContainer);
     })
     .catch(() => {
@@ -288,6 +305,20 @@ function getProgressTimestamp(record: UserProgress): number {
   const dateValue = record.updated_at || record.created_at;
   const parsed = dateValue ? new Date(dateValue).getTime() : 0;
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatProgressDateTime(value?: string): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
 
 function sortProgressRecords(records: UserProgress[]): UserProgress[] {
@@ -320,7 +351,7 @@ async function createProgressRecord(
       water_intake: 0,
     });
     renderProgress(record, container);
-    renderProgressHistory([record], historyContainer);
+    renderProgressHistory([record], historyContainer, record.id);
     attachProgressForm(record.id, userId, container, historyContainer);
     if (alertBox) {
       alertBox.textContent = 'Progress card created! Update it with your stats.';
@@ -405,17 +436,16 @@ function renderProgress(record: { current_weight?: number; target_weight?: numbe
   `;
 }
 
-function renderProgressHistory(records: UserProgress[], container: HTMLElement | null): void {
+function renderProgressHistory(records: UserProgress[], container: HTMLElement | null, liveRecordId?: number): void {
   if (!container) return;
-  const topRecords = records.slice(0, 7);
-  if (!topRecords.length) {
+  const historyRecords = records.filter((record) => record.id !== liveRecordId).slice(0, 7);
+  if (!historyRecords.length) {
     container.innerHTML = '<p class="text-muted small mb-0">No previous updates yet.</p>';
     return;
   }
-  const items = topRecords
+  const items = historyRecords
     .map((record) => {
-      const dateLabel = record.updated_at || record.created_at;
-      const friendlyDate = dateLabel ? new Date(dateLabel).toLocaleDateString() : '—';
+      const friendlyDate = formatProgressDateTime(record.updated_at || record.created_at);
       return `
         <li class="d-flex justify-content-between align-items-center py-1 border-bottom small">
           <span class="text-muted">${friendlyDate}</span>
@@ -486,8 +516,6 @@ function initWorkouts(): void {
   const typeSelect = document.getElementById('filterType') as HTMLSelectElement | null;
   const durationSelect = document.getElementById('filterDuration') as HTMLSelectElement | null;
   let workoutsData: Workout[] = [];
-  const { userId, token } = getAuthData();
-  let selectedPlanIds = new Set<number>();
 
   const debounce = (fn: (...args: unknown[]) => void, wait = 200) => {
     let timeout: number | undefined;
@@ -513,32 +541,15 @@ function initWorkouts(): void {
       })();
       return matchLevel && matchType && matchDuration;
     });
-    const filteredWithoutSelected = filtered.filter((w) => !selectedPlanIds.has(Number(w.id)));
-    renderWorkoutCards(filteredWithoutSelected, grid);
+    renderWorkoutCards(filtered, grid);
   };
 
   [levelSelect, typeSelect, durationSelect].forEach((el) => {
     el?.addEventListener('change', debounce(applyFilters));
   });
 
-  const loadSelectedPlans = async () => {
-    if (!token) return;
-    try {
-      const plans = await api.getUserTrainingPlans();
-      selectedPlanIds = new Set(
-        (plans || [])
-          .filter((plan) => String(plan.user_id) === String(userId))
-          .map((plan) => Number(plan.training_plan_id))
-          .filter((id) => Number.isFinite(id)),
-      );
-    } catch (err) {
-      selectedPlanIds = new Set<number>();
-    }
-  };
-
   const loadWorkouts = async () => {
     try {
-      await loadSelectedPlans();
       const data = await api.getWorkouts();
       workoutsData = Array.isArray(data) ? data : [];
       applyFilters();
@@ -602,8 +613,6 @@ function initWorkoutDetail(): void {
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
   const container = document.getElementById('workoutDetail');
-  const ctaButton = document.getElementById('addPlanButton') as HTMLButtonElement | null;
-  const { userId, token } = getAuthData();
 
   if (!id) {
     if (container) {
@@ -612,19 +621,6 @@ function initWorkoutDetail(): void {
     return;
   }
 
-  if (!token) {
-    ctaButton?.classList.add('d-none');
-  }
-
-  const checkIfAlreadySelected = async () => {
-    if (!ctaButton) return;
-    const alreadyAdded = await isPlanAlreadySelected(id, userId);
-    if (alreadyAdded) {
-      ctaButton.textContent = 'Already in your plans';
-      ctaButton.disabled = true;
-    }
-  };
-
   api.getWorkout(id)
     .then((workout) => renderWorkoutDetail(workout, container))
     .catch(() => {
@@ -632,25 +628,6 @@ function initWorkoutDetail(): void {
         container.innerHTML = '<p class="text-danger">Could not load workout details.</p>';
       }
     });
-
-  checkIfAlreadySelected();
-
-  ctaButton?.addEventListener('click', async () => {
-    if (!token) {
-      window.location.href = 'login.html';
-      return;
-    }
-    try {
-      await api.addUserTrainingPlan({ user_id: userId ? Number(userId) : undefined, training_plan_id: Number(id) });
-      if (ctaButton) {
-        ctaButton.textContent = 'Added!';
-        ctaButton.disabled = true;
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to add to plan';
-      alert(message);
-    }
-  });
 }
 
 function renderWorkoutDetail(workout: Workout, container: HTMLElement | null): void {
@@ -669,6 +646,223 @@ function renderWorkoutDetail(workout: Workout, container: HTMLElement | null): v
         <h6 class="fw-bold">Instructions</h6>
         <p>${workout.instructions || 'Follow the trainer guidance and maintain form.'}</p>
         ${workout.video_url ? `<div class="ratio ratio-16x9"><iframe src="${workout.video_url}" title="Workout video" allowfullscreen></iframe></div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function initTrainingPlans(): void {
+  const grid = document.getElementById('trainingPlansGrid');
+  const { userId, token } = getAuthData();
+  let plans: TrainingPlan[] = [];
+  let planWorkouts: TrainingPlanWorkout[] = [];
+  let selectedPlanIds = new Set<number>();
+
+  const renderPlans = () => {
+    if (!grid) return;
+    if (!plans.length) {
+      grid.innerHTML = '<p class="text-muted">No training plans found.</p>';
+      return;
+    }
+
+    grid.innerHTML = plans
+      .map((plan) => {
+        const workoutsForPlan = planWorkouts.filter((pw) => String(pw.training_plan_id) === String(plan.id));
+        const workoutCount = workoutsForPlan.length;
+        const title = getPlanTitle(plan, plan.id);
+        const description = typeof plan.description === 'string' ? plan.description : 'Stay consistent with this program.';
+        const alreadySelected = selectedPlanIds.has(Number(plan.id));
+        const cta = token
+          ? `<button class="btn btn-sm ${alreadySelected ? 'btn-secondary' : 'btn-brand-primary'}" data-add-plan="${plan.id}" ${
+              alreadySelected ? 'disabled' : ''
+            }>${alreadySelected ? 'Added to your plans' : 'Add to my plans'}</button>`
+          : '<a class="btn btn-sm btn-outline-dark" href="login.html">Log in to add</a>';
+
+        return `
+          <div class="card h-100 training-plan-card">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h5 class="card-title mb-1">${title}</h5>
+                  <p class="text-muted small mb-1">${workoutCount || 'No'} workouts included</p>
+                </div>
+                <span class="card-tag card-tag--accent">Plan</span>
+              </div>
+              <p class="card-text flex-grow-1">${description}</p>
+              <div class="mt-3 d-flex gap-2 flex-wrap align-items-center">
+                ${cta}
+                <a class="btn btn-sm btn-outline-dark" href="training-plan.html?id=${plan.id}">View details</a>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    grid.querySelectorAll<HTMLButtonElement>('[data-add-plan]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const planId = Number(button.dataset.addPlan);
+        if (!Number.isFinite(planId)) return;
+        if (!token) {
+          window.location.href = 'login.html';
+          return;
+        }
+        button.disabled = true;
+        try {
+          await api.addUserTrainingPlan({ user_id: userId ? Number(userId) : undefined, training_plan_id: planId });
+          selectedPlanIds.add(planId);
+          button.textContent = 'Added to your plans';
+          button.classList.remove('btn-brand-primary');
+          button.classList.add('btn-secondary');
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to add plan';
+          alert(message);
+          button.disabled = false;
+        }
+      });
+    });
+  };
+
+  const loadSelectedPlans = async () => {
+    if (!token) {
+      selectedPlanIds = new Set();
+      return;
+    }
+    try {
+      const userPlans = await api.getUserTrainingPlans();
+      selectedPlanIds = new Set(
+        (userPlans || [])
+          .filter((plan) => String(plan.user_id) === String(userId))
+          .map((plan) => Number(plan.training_plan_id))
+          .filter((id) => Number.isFinite(id)),
+      );
+    } catch (err) {
+      selectedPlanIds = new Set();
+    }
+  };
+
+  const loadPlans = async () => {
+    try {
+      const [plansResponse, planWorkoutsResponse] = await Promise.all([
+        api.getTrainingPlans(),
+        api.getTrainingPlanWorkouts().catch(() => [] as TrainingPlanWorkout[]),
+      ]);
+      plans = Array.isArray(plansResponse) ? plansResponse : [];
+      planWorkouts = Array.isArray(planWorkoutsResponse) ? planWorkoutsResponse : [];
+      await loadSelectedPlans();
+      renderPlans();
+    } catch (err) {
+      plans = [];
+      if (grid) {
+        grid.innerHTML = '<p class="text-danger">Unable to load training plans.</p>';
+      }
+    }
+  };
+
+  loadPlans();
+}
+
+function initTrainingPlanDetail(): void {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const container = document.getElementById('trainingPlanDetail');
+  const ctaButton = document.getElementById('addTrainingPlanButton') as HTMLButtonElement | null;
+  const { userId, token } = getAuthData();
+
+  if (!id) {
+    if (container) {
+      container.innerHTML = '<p class="text-danger">Training plan not found.</p>';
+    }
+    return;
+  }
+
+  const checkIfAlreadySelected = async () => {
+    if (!ctaButton) return;
+    const alreadyAdded = await isPlanAlreadySelected(id, userId);
+    if (alreadyAdded) {
+      ctaButton.textContent = 'Already in your plans';
+      ctaButton.disabled = true;
+      ctaButton.classList.remove('btn-brand-primary');
+      ctaButton.classList.add('btn-secondary');
+    }
+  };
+
+  const loadPlan = async () => {
+    try {
+      const [plan, planWorkouts] = await Promise.all([
+        api.getTrainingPlan(id),
+        api.getTrainingPlanWorkouts().catch(() => [] as TrainingPlanWorkout[]),
+      ]);
+      const workoutsForPlan = (planWorkouts || [])
+        .filter((pw) => String(pw.training_plan_id) === String(id))
+        .map((pw) => pw.workout)
+        .filter(Boolean) as Workout[];
+      renderTrainingPlanDetail(plan, workoutsForPlan, container);
+    } catch (err) {
+      if (container) {
+        container.innerHTML = '<p class="text-danger">Could not load training plan details.</p>';
+      }
+    }
+  };
+
+  loadPlan();
+  checkIfAlreadySelected();
+
+  ctaButton?.addEventListener('click', async () => {
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+    try {
+      await api.addUserTrainingPlan({ user_id: userId ? Number(userId) : undefined, training_plan_id: Number(id) });
+      ctaButton.textContent = 'Added!';
+      ctaButton.disabled = true;
+      ctaButton.classList.remove('btn-brand-primary');
+      ctaButton.classList.add('btn-secondary');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add to plans';
+      alert(message);
+    }
+  });
+}
+
+function renderTrainingPlanDetail(plan: TrainingPlan, workouts: Workout[], container: HTMLElement | null): void {
+  if (!container) return;
+  const title = getPlanTitle(plan, plan.id);
+  const description = typeof plan.description === 'string' ? plan.description : 'No description provided for this plan yet.';
+  const workoutItems = workouts.length
+    ? workouts
+        .map(
+          (workout) => `
+            <li class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <strong>${workout.title}</strong>
+                  <p class="mb-0 text-muted small">${workout.workout_type || 'mixed'} · ${workout.level || 'all levels'} · ${
+            workout.duration_min || 0
+          } min</p>
+                </div>
+                <a class="small" href="workout.html?id=${workout.id}">View workout</a>
+              </div>
+            </li>
+          `,
+        )
+        .join('')
+    : '<li class="list-group-item text-muted">No workouts linked yet.</li>';
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <div>
+            <h2 class="section-title mb-2">${title}</h2>
+            <p class="text-muted mb-0">${workouts.length || 'No'} workouts included</p>
+          </div>
+          <span class="card-tag card-tag--accent">Training plan</span>
+        </div>
+        <p>${description}</p>
+        <h6 class="fw-bold">Workouts in this plan</h6>
+        <ul class="list-group list-group-flush">${workoutItems}</ul>
       </div>
     </div>
   `;
