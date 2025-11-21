@@ -282,20 +282,19 @@ function loadProgress(
       const latest = sorted[0];
       if (!latest) {
         if (container) {
-          container.innerHTML = '<p class="mb-2">No progress yet.</p><button class="btn btn-brand-primary" type="button" id="createProgressBtn">Create progress plan</button>';
-          const createBtn = container.querySelector<HTMLButtonElement>('#createProgressBtn');
-          createBtn?.addEventListener('click', () => createProgressRecord(userId ?? undefined, container, historyContainer));
+          container.innerHTML = '<p class="mb-2">No progress yet. Log your first update below to start tracking.</p>';
         }
         if (historyContainer) {
-          historyContainer.innerHTML = '<p class="text-muted small mb-0">No previous updates yet.</p>';
+          historyContainer.innerHTML = '<p class="text-muted small mb-0">No updates yet. Your history will appear here after the first save.</p>';
         }
+        attachProgressForm(undefined, userId, container, historyContainer);
         return;
       }
       if (container) {
         renderProgress(latest, container);
       }
-      renderProgressHistory(sorted, historyContainer, latest?.id);
-      attachProgressForm(latest.id, userId, container, historyContainer);
+      renderProgressHistory(sorted, historyContainer, latest.id);
+      attachProgressForm(latest, userId, container, historyContainer);
     })
     .catch(() => {
       if (container) {
@@ -335,53 +334,8 @@ function sortProgressRecords(records: UserProgress[]): UserProgress[] {
   return [...records].sort((a, b) => getProgressTimestamp(b) - getProgressTimestamp(a));
 }
 
-async function createProgressRecord(
-  userId: string | number | undefined,
-  container: HTMLElement | null,
-  historyContainer: HTMLElement | null,
-): Promise<void> {
-  if (!container) return;
-  const alertBox = document.getElementById('progressAlert');
-  alertBox?.classList.add('d-none');
-  const numericUserId = Number(userId);
-  if (!Number.isFinite(numericUserId)) {
-    if (alertBox) {
-      alertBox.textContent = 'Unable to identify user for progress creation.';
-      alertBox.classList.remove('d-none');
-    }
-    return;
-  }
-
-  try {
-    const record = await api.createUserProgress({
-      user_id: numericUserId,
-      current_weight: 0,
-      target_weight: 0,
-      steps_walked: 0,
-      water_intake: 0,
-    });
-    renderProgress(record, container);
-    renderProgressHistory([record], historyContainer, record.id);
-    attachProgressForm(record.id, userId, container, historyContainer);
-    if (alertBox) {
-      alertBox.textContent = 'Progress card created! Update it with your stats.';
-      alertBox.classList.remove('d-none');
-      alertBox.classList.remove('alert-danger');
-      alertBox.classList.add('alert-success');
-    }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create progress record';
-    if (alertBox) {
-      alertBox.textContent = message;
-      alertBox.classList.remove('d-none');
-      alertBox.classList.remove('alert-success');
-      alertBox.classList.add('alert-danger');
-    }
-  }
-}
-
 function attachProgressForm(
-  progressId: number,
+  latestRecord: UserProgress | undefined,
   userId?: string | number | null,
   container?: HTMLElement | null,
   historyContainer?: HTMLElement | null,
@@ -389,21 +343,35 @@ function attachProgressForm(
   const form = document.getElementById('progressForm') as HTMLFormElement | null;
   if (!form) return;
   form.classList.remove('d-none');
+  setNumberInputValue(form, 'current_weight', latestRecord?.current_weight);
+  setNumberInputValue(form, 'target_weight', latestRecord?.target_weight);
+  setNumberInputValue(form, 'steps_walked', latestRecord?.steps_walked);
+  setNumberInputValue(form, 'water_intake', latestRecord?.water_intake);
+  const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.textContent = latestRecord ? 'Log new progress' : 'Save first progress entry';
+  }
   form.onsubmit = async (e) => {
     e.preventDefault();
+    const numericUserId = Number(userId);
     const payload = {
-      current_weight: Number(getFormValue(form, 'current_weight')),
-      target_weight: Number(getFormValue(form, 'target_weight')),
-      steps_walked: Number(getFormValue(form, 'steps_walked')),
-      water_intake: Number(getFormValue(form, 'water_intake')),
+      user_id: Number.isFinite(numericUserId) ? numericUserId : undefined,
+      current_weight: parseNumericInput(getFormValue(form, 'current_weight'), latestRecord?.current_weight),
+      target_weight: parseNumericInput(getFormValue(form, 'target_weight'), latestRecord?.target_weight),
+      steps_walked: parseNumericInput(getFormValue(form, 'steps_walked'), latestRecord?.steps_walked),
+      water_intake: parseNumericInput(getFormValue(form, 'water_intake'), latestRecord?.water_intake),
     };
     const alertBox = document.getElementById('progressAlert');
     alertBox?.classList.add('d-none');
     try {
-      await api.updateUserProgress(progressId, payload);
+      if (!Number.isFinite(numericUserId)) {
+        throw new Error('Unable to identify user for progress update.');
+      }
+      await api.updateUserProgress(payload);
       if (alertBox) {
-        alertBox.textContent = 'Progress updated!';
+        alertBox.textContent = 'Progress saved!';
         alertBox.classList.remove('d-none');
+        alertBox.classList.remove('alert-danger');
         alertBox.classList.add('alert-success');
       }
       if (userId !== undefined) {
@@ -414,12 +382,34 @@ function attachProgressForm(
       if (alertBox) {
         alertBox.textContent = message;
         alertBox.classList.remove('d-none');
+        alertBox.classList.remove('alert-success');
+        alertBox.classList.add('alert-danger');
       }
     }
   };
 }
 
-function renderProgress(record: { current_weight?: number; target_weight?: number; steps_walked?: number; water_intake?: number }, container: HTMLElement): void {
+function setNumberInputValue(form: HTMLFormElement, name: string, value: number | undefined): void {
+  const control = form.elements.namedItem(name) as HTMLInputElement | null;
+  if (!control) return;
+  if (value === undefined || value === null) {
+    control.value = '';
+    return;
+  }
+  control.value = String(value);
+}
+
+function parseNumericInput(raw: string, fallback?: number): number | undefined {
+  if (raw === '') return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function renderProgress(
+  record: { current_weight?: number; target_weight?: number; steps_walked?: number; water_intake?: number; updated_at?: string; created_at?: string },
+  container: HTMLElement,
+): void {
+  const lastUpdated = formatProgressDateTime(record.updated_at || record.created_at);
   container.innerHTML = `
     <div class="progress-card">
       <div class="d-flex justify-content-between">
@@ -442,6 +432,7 @@ function renderProgress(record: { current_weight?: number; target_weight?: numbe
           <h6>${record.water_intake ?? 0} L</h6>
         </div>
       </div>
+      <p class="text-muted small mb-0 mt-3">Last updated: ${lastUpdated}</p>
     </div>
   `;
 }
@@ -449,7 +440,6 @@ function renderProgress(record: { current_weight?: number; target_weight?: numbe
 function renderProgressHistory(records: UserProgress[], container: HTMLElement | null, liveRecordId?: number): void {
   if (!container) return;
   const historyRecords = [...records]
-    .filter((record) => (liveRecordId === undefined ? true : record.id !== liveRecordId))
     .sort((a, b) => getProgressTimestamp(b) - getProgressTimestamp(a))
     .slice(0, 7);
   if (!historyRecords.length) {
@@ -459,12 +449,16 @@ function renderProgressHistory(records: UserProgress[], container: HTMLElement |
   const items = historyRecords
     .map((record) => {
       const friendlyDate = formatProgressDateTime(record.updated_at || record.created_at);
-      const isLatest = liveRecordId !== undefined && record.id === liveRecordId;
+      const isLatest = liveRecordId !== undefined ? record.id === liveRecordId : false;
       const badge = isLatest ? '<span class="badge bg-dark ms-2">Latest</span>' : '';
       return `
-        <li class="d-flex justify-content-between align-items-center py-1 border-bottom small">
-          <span class="text-muted">${friendlyDate}${badge}</span>
-          <span class="fw-semibold">${record.current_weight ?? '-'} kg · ${record.steps_walked ?? 0} steps</span>
+        <li class="d-flex justify-content-between align-items-start py-2 border-bottom small gap-3">
+          <div class="flex-grow-1">
+            <div class="fw-semibold">${record.current_weight ?? '-'} kg</div>
+            <div class="text-muted">Target: ${record.target_weight ?? '-'} kg</div>
+            <div class="text-muted">Steps: ${record.steps_walked ?? 0} · Water: ${record.water_intake ?? 0} L</div>
+          </div>
+          <div class="text-end text-muted">${friendlyDate}${badge}</div>
         </li>
       `;
     })
