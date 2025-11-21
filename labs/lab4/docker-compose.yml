@@ -10,7 +10,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
-    restart: on-failure
+    restart: always
 
   workout-service:
     build:
@@ -23,7 +23,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
-    restart: on-failure
+    restart: always
 
   order-service:
     build:
@@ -35,8 +35,9 @@ services:
       - ../lab3/src/microservices/order-service/.env.example
     depends_on:
       - postgres
+      - rabbitmq
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
-    restart: on-failure
+    restart: always
 
   progress-service:
     build:
@@ -48,9 +49,9 @@ services:
       - ../lab3/src/microservices/progress-service/.env.example
     depends_on:
       - postgres
+      - rabbitmq
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
-    restart: on-failure
-
+    restart: always
 
   auth-service:
     build:
@@ -63,8 +64,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
-    restart: on-failure
-
+    restart: always
 
   postgres:
     image: postgres:15
@@ -88,6 +88,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:

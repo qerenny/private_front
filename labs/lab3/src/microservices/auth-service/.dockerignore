@@ -1,0 +1,32 @@
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-debug.log
+yarn-error.log
+
+dist
+build
+
+.env
+.env.*
+!.env.example
+
+*.tsbuildinfo
+
+coverage
+.vscode
+.idea
+.DS_Store
+.git
+.gitignore
+
+# TypeScript temp
+*.map
+
+# Logs
+logs
+*.log
+
+# Docker
+Dockerfile*
+docker-compose*
