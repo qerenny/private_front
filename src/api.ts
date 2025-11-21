@@ -34,6 +34,14 @@ export interface TrainingPlan {
   description?: string;
 }
 
+export interface TrainingPlanWorkout {
+  id: number;
+  training_plan_id: number;
+  workout_id: number;
+  training_plan?: TrainingPlan;
+  workout?: Workout;
+}
+
 export interface BlogPost {
   id: number;
   title: string;
@@ -128,6 +136,14 @@ async function getTrainingPlan(id: string | number): Promise<TrainingPlan> {
   return apiFetch<TrainingPlan>(`${WORKOUT_API_URL}/training-plans/${id}`);
 }
 
+async function getTrainingPlans(): Promise<TrainingPlan[]> {
+  return apiFetch<TrainingPlan[]>(`${WORKOUT_API_URL}/training-plans`);
+}
+
+async function getTrainingPlanWorkouts(): Promise<TrainingPlanWorkout[]> {
+  return apiFetch<TrainingPlanWorkout[]>(`${WORKOUT_API_URL}/training-plan-workouts`);
+}
+
 async function getBlogPosts(): Promise<BlogPost[]> {
   return apiFetch<BlogPost[]>(`${BLOG_API_URL}/blog-posts`);
 }
@@ -181,6 +197,8 @@ declare global {
       getWorkouts: typeof getWorkouts;
       getWorkout: typeof getWorkout;
       getTrainingPlan: typeof getTrainingPlan;
+      getTrainingPlans: typeof getTrainingPlans;
+      getTrainingPlanWorkouts: typeof getTrainingPlanWorkouts;
       getBlogPosts: typeof getBlogPosts;
       getBlogPost: typeof getBlogPost;
       createBlogComment: typeof createBlogComment;
@@ -207,6 +225,8 @@ window.GrizzlyApi = {
   getWorkouts,
   getWorkout,
   getTrainingPlan,
+  getTrainingPlans,
+  getTrainingPlanWorkouts,
   getBlogPosts,
   getBlogPost,
   createBlogComment,
