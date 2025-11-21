@@ -170,9 +170,9 @@ async function createUserProgress(payload: Partial<UserProgress>): Promise<UserP
   }, true);
 }
 
-async function updateUserProgress(id: string | number, payload: Partial<UserProgress>): Promise<unknown> {
-  return apiFetch(`${PROGRESS_API_URL}/user-progress/${id}`, {
-    method: 'PATCH',
+async function updateUserProgress(payload: Partial<UserProgress>): Promise<UserProgress> {
+  return apiFetch<UserProgress>(`${PROGRESS_API_URL}/user-progress/`, {
+    method: 'POST',
     body: JSON.stringify(payload),
   }, true);
 }
