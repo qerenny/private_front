@@ -588,7 +588,7 @@ function renderBlogCards(list: BlogPost[], container: HTMLElement | null): void 
     .map((post) => `
       <div class="card h-100">
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title card-tag--accent">${post.title}</h5>
+          <h5 class="card-title">${post.title}</h5>
           <p class="card-text text-muted small">${new Date(post.created_at || Date.now()).toLocaleDateString()}</p>
           <p class="card-text flex-grow-1">${getPostPreview(post.content)}</p>
           <a class="btn btn-sm btn-brand-primary mt-auto align-self-start" href="blog-post.html?id=${post.id}">Read more</a>
@@ -741,7 +741,7 @@ function renderBlogPost(post: BlogPost, container: HTMLElement | null): void {
   container.innerHTML = `
     <div class="card">
       <div class="card-body">
-        <span class="card-tag card-tag--accent mb-2">${new Date(post.created_at || Date.now()).toLocaleDateString()}</span>
+        <span class="card-tag mb-2">${new Date(post.created_at || Date.now()).toLocaleDateString()}</span>
         <h2 class="section-title">${post.title}</h2>
         <p class="text-muted">${authorName}</p>
         <p>${contentText}</p>
