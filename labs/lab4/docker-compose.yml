@@ -10,6 +10,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
+    restart: on-failure
 
   workout-service:
     build:
@@ -22,6 +23,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
+    restart: on-failure
 
   order-service:
     build:
@@ -34,6 +36,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
+    restart: on-failure
 
   progress-service:
     build:
@@ -46,6 +49,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
+    restart: on-failure
 
 
   auth-service:
@@ -59,6 +63,7 @@ services:
     depends_on:
       - postgres
     command: sh -c "pnpm install && pnpm migration:run && pnpm start"
+    restart: on-failure
 
 
   postgres:

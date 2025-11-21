@@ -206,7 +206,7 @@ function initDashboard(): void {
         if (progressContainer) {
           progressContainer.innerHTML = '<p class="mb-2">No progress yet.</p><button class="btn btn-brand-primary" type="button" id="createProgressBtn">Create progress plan</button>';
           const createBtn = progressContainer.querySelector<HTMLButtonElement>('#createProgressBtn');
-          createBtn?.addEventListener('click', () => createProgressRecord(userId, progressContainer));
+          createBtn?.addEventListener('click', () => createProgressRecord(userId ?? undefined, progressContainer));
         }
         return;
       }
@@ -232,10 +232,12 @@ function initDashboard(): void {
       const listItems = await Promise.all(userPlans.map(async (p) => {
         try {
           const planInfo = await api.getTrainingPlan(p.training_plan_id);
+          const planTitle = planInfo.title || planInfo.plan_name || `Plan #${p.training_plan_id}`;
+          const planDescription = planInfo.description || 'No description available.';
           return `
             <li class="list-group-item d-flex flex-column">
-              <strong>${planInfo.title}</strong>
-              <small class="text-muted">${planInfo.description || ''}</small>
+              <strong>${planTitle}</strong>
+              <small class="text-muted">${planDescription}</small>
             </li>
           `;
         } catch (e) {
@@ -435,8 +437,7 @@ function renderBlogCards(list: BlogPost[], container: HTMLElement | null): void 
     .map((post) => `
       <div class="card h-100">
         <div class="card-body d-flex flex-column">
-          <span class="card-tag card-tag--accent mb-2">Blog</span>
-          <h5 class="card-title">${post.title}</h5>
+          <h5 class="card-title card-tag--accent">${post.title}</h5>
           <p class="card-text text-muted small">${new Date(post.created_at || Date.now()).toLocaleDateString()}</p>
           <p class="card-text flex-grow-1">${(post.content || '').slice(0, 120)}...</p>
           <a class="btn btn-sm btn-brand-primary mt-auto align-self-start" href="blog-post.html?id=${post.id}">Read more</a>
@@ -602,4 +603,3 @@ function renderComments(comments: BlogComment[], container: HTMLElement | null):
     `)
     .join('');
 }
-

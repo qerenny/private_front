@@ -29,7 +29,8 @@ export interface Workout {
 
 export interface TrainingPlan {
   id: number;
-  title: string;
+  title?: string;
+  plan_name?: string;
   description?: string;
 }
 
