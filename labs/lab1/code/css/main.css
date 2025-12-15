@@ -1,17 +1,78 @@
 :root {
+  /* Base Palette */
   --color-brown: #A89273;
   --color-accent: #FAE016;
   --color-dark: #1B1714;
   --color-grey: #A7ABAE;
   --color-light: #FEFEFE;
+
+  /* Semantic Variables (Light Theme Default) */
+  --bg-body: var(--color-light);
+  --text-body: var(--color-dark);
+  --bg-surface: #f8f8f8;
+  --bg-surface-alt: #f7f7f7;
+  --bg-card: #fdfdfd;
+  --bg-input: #ffffff;
+  --border-color: var(--color-grey);
+
+  --navbar-bg: var(--color-dark);
+  --navbar-text: var(--color-light);
+  --navbar-toggler-color: rgba(255, 255, 255, 0.6);
+
+  --hero-bg: var(--color-dark);
+  --hero-text: var(--color-light);
+
+  --footer-bg: var(--color-dark);
+  --footer-text: var(--color-light);
+
+  --feature-card-bg: #f8f8f8;
+  --feature-icon-bg: var(--color-brown);
+  --feature-icon-text: var(--color-light);
+
+  --tag-bg: var(--color-brown);
+  --tag-text: var(--color-light);
+
+  --btn-primary-bg: var(--color-accent);
+  --btn-primary-text: var(--color-dark);
+  --btn-primary-hover: #e0c800;
+
   --font-heading: 'Montserrat', 'Roboto', sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg-body: #121212;
+  --text-body: #e0e0e0;
+  --bg-surface: #1e1e1e;
+  --bg-surface-alt: #1e1e1e;
+  --bg-card: #1e1e1e;
+  --bg-input: #2c2c2c;
+  --border-color: #444444;
+
+  --navbar-bg: #000000;
+  --navbar-text: #e0e0e0;
+  --navbar-toggler-color: rgba(255, 255, 255, 0.6);
+
+  --hero-bg: #000000;
+  --hero-text: #e0e0e0;
+
+  --footer-bg: #000000;
+  --footer-text: #e0e0e0;
+
+  --feature-card-bg: #1e1e1e;
+  --feature-icon-bg: var(--color-brown);
+  --feature-icon-text: var(--color-light); /* Keep light icon on brown bg */
+
+  /* Accent stays same or adjusted slightly */
+  --btn-primary-bg: var(--color-accent);
+  --btn-primary-text: var(--color-dark);
 }
 
 body {
   font-family: 'Roboto', sans-serif;
-  background-color: var(--color-light);
-  color: var(--color-dark);
+  background-color: var(--bg-body);
+  color: var(--text-body);
   padding-top: 72px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .navbar-brand img {
@@ -19,11 +80,12 @@ body {
 }
 
 .navbar-custom {
-  background-color: var(--color-dark);
+  background-color: var(--navbar-bg);
+  transition: background-color 0.3s;
 }
 
 .navbar-custom .navbar-toggler {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: var(--navbar-toggler-color);
 }
 
 .navbar-custom .navbar-toggler-icon {
@@ -33,13 +95,33 @@ body {
 .navbar-custom .nav-link,
 .navbar-custom .navbar-brand,
 .navbar-custom .navbar-text {
-  color: var(--color-light) !important;
+  color: var(--navbar-text) !important;
   font-weight: 600;
 }
 
+/* Theme Toggle Button Styles */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--navbar-text);
+  color: var(--navbar-text);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: all 0.3s;
+}
+
+.theme-toggle-btn:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
 .btn-brand-primary {
-  background-color: var(--color-accent);
-  color: var(--color-dark);
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   border: none;
   font-weight: 700;
   text-transform: uppercase;
@@ -47,28 +129,29 @@ body {
 
 .btn-brand-primary:hover,
 .btn-brand-primary:focus {
-  background-color: #e0c800;
-  color: var(--color-dark);
+  background-color: var(--btn-primary-hover);
+  color: var(--btn-primary-text);
 }
 
 .btn-brand-outline {
-  border: 2px solid var(--color-light);
-  color: var(--color-light);
+  border: 2px solid var(--navbar-text); /* Use navbar text color which is light */
+  color: var(--navbar-text);
   text-transform: uppercase;
   font-weight: 700;
 }
 
 .btn-brand-outline:hover {
-  background-color: var(--color-light);
-  color: var(--color-dark);
+  background-color: var(--navbar-text);
+  color: var(--color-dark); /* Always dark text on hover because background becomes light */
 }
 
 .hero {
-  background-color: var(--color-dark);
-  color: var(--color-light);
+  background-color: var(--hero-bg);
+  color: var(--hero-text);
   padding: 96px 0;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s;
 }
 
 .hero__content {
@@ -97,8 +180,8 @@ body {
 }
 
 .feature-card {
-  background-color: #f8f8f8;
-  border: 1px solid var(--color-grey);
+  background-color: var(--feature-card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   height: 100%;
 }
@@ -106,8 +189,8 @@ body {
 .feature-card__icon {
   width: 48px;
   height: 48px;
-  background-color: var(--color-brown);
-  color: var(--color-light);
+  background-color: var(--feature-icon-bg);
+  color: var(--feature-icon-text);
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
@@ -123,8 +206,8 @@ body {
 
 .card-tag {
   display: inline-block;
-  background-color: var(--color-brown);
-  color: var(--color-light);
+  background-color: var(--tag-bg);
+  color: var(--tag-text);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -137,9 +220,10 @@ body {
 }
 
 .footer {
-  background-color: var(--color-dark);
-  color: var(--color-light);
+  background-color: var(--footer-bg);
+  color: var(--footer-text);
   padding: 32px 0;
+  transition: background-color 0.3s;
 }
 
 .footer a {
@@ -155,13 +239,17 @@ body {
   padding: 32px 16px;
   background: linear-gradient(135deg, rgba(168, 146, 115, 0.15), rgba(250, 224, 22, 0.15));
 }
+[data-theme="dark"] .auth-wrapper {
+   background: linear-gradient(135deg, rgba(20, 20, 20, 0.9), rgba(30, 30, 30, 0.9));
+}
 
 .auth-card {
   width: 100%;
   max-width: 480px;
-  border: 1px solid var(--color-grey);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+  background-color: var(--bg-card);
 }
 
 .dashboard {
@@ -183,8 +271,8 @@ body {
 }
 
 .dashboard__sidebar {
-  background-color: #f7f7f7;
-  border: 1px solid var(--color-grey);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
 }
 
@@ -195,10 +283,13 @@ body {
 }
 
 .progress-card {
-  border: 1px solid var(--color-grey);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
-  background-color: #fffaf1;
+  background-color: #fffaf1; /* Keep this specific color for now or semanticize it */
+}
+[data-theme="dark"] .progress-card {
+  background-color: #2a251b; /* Darker version of #fffaf1 */
 }
 
 .workouts-grid {
@@ -208,9 +299,9 @@ body {
 }
 
 .workout-card {
-  border: 1px solid var(--color-grey);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  background-color: #fdfdfd;
+  background-color: var(--bg-card);
   display: flex;
   flex-direction: column;
 }
@@ -222,10 +313,31 @@ body {
 }
 
 .comment-box {
-  border: 1px solid var(--color-grey);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
-  background-color: #f8f8f8;
+  background-color: var(--bg-surface);
+}
+
+/* Bootstrap Overrides for Dark Mode */
+[data-theme="dark"] .card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-body);
+}
+
+[data-theme="dark"] .list-group-item {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-body);
+}
+
+[data-theme="dark"] .bg-light {
+  background-color: var(--bg-surface) !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #999 !important;
 }
 
 @media (min-width: 768px) {
