@@ -13,6 +13,7 @@
   --bg-surface-alt: #f7f7f7;
   --bg-card: #fdfdfd;
   --bg-input: #ffffff;
+  --text-input: var(--color-dark);
   --border-color: var(--color-grey);
 
   --navbar-bg: var(--color-dark);
@@ -46,6 +47,7 @@
   --bg-surface-alt: #1e1e1e;
   --bg-card: #1e1e1e;
   --bg-input: #2c2c2c;
+  --text-input: #e0e0e0;
   --border-color: #444444;
 
   --navbar-bg: #000000;
@@ -143,6 +145,37 @@ body {
 .btn-brand-outline:hover {
   background-color: var(--navbar-text);
   color: var(--color-dark); /* Always dark text on hover because background becomes light */
+}
+
+/* Fix generic buttons in Dark Mode (specifically btn-outline-dark) */
+[data-theme="dark"] .btn-outline-dark {
+  color: var(--text-body);
+  border-color: var(--text-body);
+}
+
+[data-theme="dark"] .btn-outline-dark:hover {
+  background-color: var(--text-body);
+  color: var(--bg-body);
+}
+
+/* Input Fields Theming */
+input, select, textarea, .form-control, .form-select {
+  background-color: var(--bg-input) !important;
+  color: var(--text-input) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Handle placeholder color for inputs in dark mode */
+[data-theme="dark"] ::placeholder {
+  color: #888 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: var(--bg-input);
+  color: var(--text-input);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.25rem rgba(250, 224, 22, 0.25);
 }
 
 .hero {
