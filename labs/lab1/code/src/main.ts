@@ -1,4 +1,5 @@
 import type { BlogComment, BlogPost, TrainingPlan, TrainingPlanWorkout, UserProgress, Workout } from './api';
+import { initTheme } from './theme.js';
 
 const { getAuthData, logout, requireAuth } = window.GrizzlyAuth;
 const api = window.GrizzlyApi;
@@ -17,6 +18,7 @@ type PageName =
   | undefined;
 
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   setupNavbar();
   routeInit();
 });
