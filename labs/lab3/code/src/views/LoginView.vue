@@ -1,56 +1,54 @@
 <template>
-  <v-container class="fill-height justify-center">
-    <v-card width="100%" max-width="400" class="pa-4">
-      <v-card-title class="text-center text-h5 mb-4">Login</v-card-title>
-      <v-form @submit.prevent="handleLogin">
-        <v-alert
-          v-if="error"
-          type="error"
-          variant="tonal"
-          class="mb-4"
-          closable
-          @click:close="error = null"
-        >
+  <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
+      <div class="card-body">
+        <h3 class="card-title text-center mb-4 fw-bold">Login</h3>
+
+        <div v-if="error" id="loginAlert" class="alert alert-danger" role="alert">
           {{ error }}
-        </v-alert>
+        </div>
 
-        <v-text-field
-          v-model="email"
-          label="Email"
-          type="email"
-          prepend-inner-icon="mdi-email"
-          variant="outlined"
-          required
-        ></v-text-field>
-
-        <v-text-field
-          v-model="password"
-          label="Password"
-          type="password"
-          prepend-inner-icon="mdi-lock"
-          variant="outlined"
-          required
-        ></v-text-field>
-
-        <v-btn
-          type="submit"
-          block
-          color="primary"
-          size="large"
-          :loading="loading"
-          class="mt-2"
-        >
-          Sign In
-        </v-btn>
-      </v-form>
-
-      <div class="text-center mt-4">
-        <router-link to="/register" class="text-decoration-none text-primary">
-          Don't have an account? Register
-        </router-link>
+        <form @submit.prevent="handleLogin" id="loginForm">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input
+              v-model="email"
+              type="email"
+              class="form-control"
+              id="email"
+              name="email"
+              required
+              placeholder="name@example.com"
+            >
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input
+              v-model="password"
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              required
+            >
+          </div>
+          <div class="d-grid gap-2">
+            <button
+              type="submit"
+              class="btn btn-brand-primary btn-lg"
+              :disabled="loading"
+            >
+              <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Sign In
+            </button>
+          </div>
+        </form>
+        <div class="text-center mt-3">
+          <p class="small text-muted">Don't have an account? <router-link to="/register" class="link-brand-primary">Register here</router-link></p>
+        </div>
       </div>
-    </v-card>
-  </v-container>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -76,7 +74,7 @@ async function handleLogin() {
     if (e instanceof Error) {
       error.value = e.message;
     } else {
-      error.value = 'Failed to login';
+      error.value = 'Unable to login. Please try again.';
     }
   } finally {
     loading.value = false;

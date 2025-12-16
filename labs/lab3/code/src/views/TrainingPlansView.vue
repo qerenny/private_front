@@ -1,61 +1,52 @@
 <template>
-  <v-container>
-    <h1 class="text-h4 font-weight-bold mb-6">Training Plans</h1>
+  <div class="container py-5">
+    <h1 class="display-6 fw-bold mb-5">Training Plans</h1>
 
-    <div v-if="loading" class="d-flex justify-center py-12">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
     </div>
 
-    <v-row v-else>
-      <v-col
-        v-for="plan in plans"
-        :key="plan.id"
-        cols="12"
-        md="6"
-        lg="4"
-      >
-        <v-card class="h-100 d-flex flex-column" hover>
-          <v-card-item>
-            <v-card-title>{{ plan.title || plan.plan_name || plan.name }}</v-card-title>
-            <v-card-subtitle>Program</v-card-subtitle>
-          </v-card-item>
+    <div v-else class="row g-4" id="trainingPlansGrid">
+       <div v-if="!plans.length" class="col-12 text-center text-muted">
+         <p>No training plans found.</p>
+       </div>
+       <div v-for="plan in plans" :key="plan.id" class="col-md-6 col-lg-4">
+          <div class="card h-100 training-plan-card">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h5 class="card-title mb-1">{{ plan.title || plan.plan_name || plan.name }}</h5>
+                  <p class="text-muted small mb-1">Program</p>
+                </div>
+                <span class="card-tag card-tag--accent">Plan</span>
+              </div>
+              <p class="card-text flex-grow-1">{{ plan.description || 'Stay consistent with this program.' }}</p>
+              <div class="mt-3 d-flex gap-2 flex-wrap align-items-center">
+                 <button
+                   v-if="isAuthenticated && !isJoined(plan.id)"
+                   class="btn btn-sm btn-brand-primary"
+                   @click="joinPlan(plan.id)"
+                   :disabled="joining === plan.id"
+                 >
+                    <span v-if="joining === plan.id" class="spinner-border spinner-border-sm me-1"></span>
+                    Add to my plans
+                 </button>
+                 <button
+                   v-else-if="isAuthenticated && isJoined(plan.id)"
+                   class="btn btn-sm btn-secondary"
+                   disabled
+                 >
+                    Added to your plans
+                 </button>
+                 <router-link v-else class="btn btn-sm btn-outline-dark" to="/login">Log in to add</router-link>
 
-          <v-card-text>
-            {{ plan.description || 'No description available.' }}
-          </v-card-text>
-
-          <v-card-actions class="mt-auto">
-             <v-btn
-               variant="text"
-               color="primary"
-               :to="'/training-plans/' + plan.id"
-             >
-               View Plan
-             </v-btn>
-             <v-spacer></v-spacer>
-             <v-btn
-               v-if="isAuthenticated && !isJoined(plan.id)"
-               variant="tonal"
-               color="primary"
-               @click="joinPlan(plan.id)"
-               :loading="joining === plan.id"
-             >
-               Add to Plans
-             </v-btn>
-             <v-btn
-               v-else-if="isAuthenticated && isJoined(plan.id)"
-               variant="flat"
-               color="success"
-               disabled
-               prepend-icon="mdi-check"
-             >
-               Joined
-             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+                 <router-link class="btn btn-sm btn-outline-dark" :to="'/training-plans/' + plan.id">View details</router-link>
+              </div>
+            </div>
+          </div>
+       </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">

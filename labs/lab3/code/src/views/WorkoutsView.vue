@@ -1,76 +1,57 @@
 <template>
-  <v-container>
-    <div class="d-flex flex-column flex-md-row justify-space-between align-center mb-6">
-      <h1 class="text-h4 font-weight-bold">Workouts</h1>
+  <div class="container py-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+      <h1 class="display-6 fw-bold">Workouts</h1>
 
       <!-- Filters -->
-      <div class="d-flex gap-2 mt-4 mt-md-0">
-        <v-select
-          v-model="filters.level"
-          :items="['beginner', 'intermediate', 'advanced']"
-          label="Level"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="min-w-150"
-          clearable
-        ></v-select>
-        <v-select
-          v-model="filters.type"
-          :items="['strength', 'cardio', 'flexibility', 'hiit']"
-          label="Type"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="min-w-150"
-          clearable
-        ></v-select>
+      <div class="d-flex gap-2 mt-3 mt-md-0">
+        <select v-model="filters.level" class="form-select form-select-sm" aria-label="Filter by Level">
+          <option value="">All Levels</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+        <select v-model="filters.type" class="form-select form-select-sm" aria-label="Filter by Type">
+          <option value="">All Types</option>
+          <option value="strength">Strength</option>
+          <option value="cardio">Cardio</option>
+          <option value="flexibility">Flexibility</option>
+          <option value="hiit">HIIT</option>
+        </select>
+        <select v-model="filters.duration" class="form-select form-select-sm" aria-label="Filter by Duration">
+          <option value="">Any Duration</option>
+          <option value="<20">&lt; 20 min</option>
+          <option value="20-40">20-40 min</option>
+          <option value=">40">&gt; 40 min</option>
+        </select>
       </div>
     </div>
 
-    <v-row v-if="loading">
-       <v-col v-for="n in 6" :key="n" cols="12" sm="6" md="4">
-         <v-skeleton-loader type="card"></v-skeleton-loader>
-       </v-col>
-    </v-row>
+    <div v-if="loading" class="text-center py-5">
+       <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
 
-    <v-row v-else-if="filteredWorkouts.length">
-      <v-col
-        v-for="workout in filteredWorkouts"
-        :key="workout.id"
-        cols="12"
-        sm="6"
-        md="4"
-      >
-        <v-card class="h-100 d-flex flex-column" hover :to="'/workouts/' + workout.id">
-          <v-card-item>
-            <div class="d-flex justify-space-between mb-2">
-              <v-chip size="small" color="primary" class="text-capitalize">{{ workout.level || 'All Levels' }}</v-chip>
-              <span class="text-caption text-medium-emphasis">{{ workout.duration_min }} min</span>
+    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+
+    <div v-else class="row g-4" id="workoutsGrid">
+       <div v-if="!filteredWorkouts.length" class="col-12 text-center text-muted">
+         <p>No workouts found matching your criteria.</p>
+       </div>
+       <div v-for="w in filteredWorkouts" :key="w.id" class="col-md-6 col-lg-4">
+          <div class="card workout-card h-100">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="card-title mb-0">{{ w.title }}</h5>
+                <span class="card-tag">{{ w.level || 'all levels' }}</span>
+              </div>
+              <p class="card-text text-muted small">{{ w.workout_type || 'mixed' }} · {{ w.duration_min || 0 }} min</p>
+              <p class="card-text flex-grow-1">{{ w.description || '' }}</p>
+              <router-link class="btn btn-sm btn-brand-primary mt-auto align-self-start" :to="'/workouts/' + w.id">View details</router-link>
             </div>
-            <v-card-title>{{ workout.title }}</v-card-title>
-            <v-card-subtitle class="text-capitalize">{{ workout.workout_type }}</v-card-subtitle>
-          </v-card-item>
-
-          <v-card-text>
-            {{ workout.description }}
-          </v-card-text>
-
-          <v-card-actions class="mt-auto">
-            <v-btn variant="text" color="primary" block>View Details</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-alert v-else type="info" variant="tonal" class="mt-4">
-      No workouts found matching your criteria.
-    </v-alert>
-
-    <v-alert v-if="error" type="error" class="mt-4">
-      {{ error }}
-    </v-alert>
-  </v-container>
+          </div>
+       </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -80,14 +61,23 @@ import { useWorkouts } from '@/composables/useWorkouts';
 const { workouts, loading, error, fetchWorkouts } = useWorkouts();
 
 const filters = ref({
-  level: null as string | null,
-  type: null as string | null
+  level: '',
+  type: '',
+  duration: ''
 });
 
 const filteredWorkouts = computed(() => {
   return workouts.value.filter(w => {
     if (filters.value.level && w.level !== filters.value.level) return false;
     if (filters.value.type && w.workout_type !== filters.value.type) return false;
+
+    if (filters.value.duration) {
+      const d = w.duration_min || 0;
+      if (filters.value.duration === '<20' && d >= 20) return false;
+      if (filters.value.duration === '20-40' && (d < 20 || d > 40)) return false;
+      if (filters.value.duration === '>40' && d <= 40) return false;
+    }
+
     return true;
   });
 });
@@ -96,9 +86,3 @@ onMounted(() => {
   fetchWorkouts();
 });
 </script>
-
-<style scoped>
-.min-w-150 {
-  min-width: 150px;
-}
-</style>

@@ -1,68 +1,64 @@
 <template>
-  <v-container>
-    <div v-if="loading" class="d-flex justify-center py-12">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+  <div class="container py-5">
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
     </div>
 
-    <v-alert v-else-if="error" type="error">{{ error }}</v-alert>
+    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-    <div v-else-if="post">
-      <v-btn variant="text" prepend-icon="mdi-arrow-left" to="/blog" class="mb-4">Back to Blog</v-btn>
+    <div v-else-if="post" id="blogPost">
+       <div class="card border-0 shadow-sm mb-5">
+         <div class="card-body p-4">
+           <span class="card-tag mb-2 d-inline-block">{{ formatDate(post.created_at) }}</span>
+           <h2 class="section-title mb-1">{{ post.title }}</h2>
+           <p class="text-muted mb-4">{{ formatAuthor(post.author) }}</p>
+           <div class="blog-content">
+              <p>{{ getContent(post.content) }}</p>
+           </div>
+         </div>
+       </div>
 
-      <v-card class="mb-6">
-        <v-card-text>
-          <div class="text-caption text-medium-emphasis mb-2">
-            {{ formatDate(post.created_at) }} · By {{ formatAuthor(post.author) }}
-          </div>
-          <h1 class="text-h3 font-weight-bold mb-6">{{ post.title }}</h1>
-          <div class="text-body-1 whitespace-pre-wrap">
-            {{ getContent(post.content) }}
-          </div>
-        </v-card-text>
-      </v-card>
+       <!-- Comments -->
+       <div class="card border-0 shadow-sm">
+         <div class="card-body p-4">
+           <h4 class="fw-bold mb-4">Comments</h4>
+           <div id="commentsList" class="mb-4">
+              <div v-if="post.comments && post.comments.length">
+                 <div v-for="(c, idx) in post.comments" :key="idx" class="comment-box mb-2 p-3 bg-light rounded">
+                   <div class="d-flex justify-content-between align-items-center mb-1">
+                      <strong>{{ formatAuthor(c.user_name || c.user) }}</strong>
+                      <small class="text-muted">{{ formatDate(c.created_at) }}</small>
+                   </div>
+                   <p class="mb-0">{{ c.comment_text }}</p>
+                 </div>
+              </div>
+              <p v-else class="text-muted">No comments yet.</p>
+           </div>
 
-      <!-- Comments -->
-      <v-card>
-        <v-card-title>Comments</v-card-title>
-        <v-card-text>
-          <v-list v-if="post.comments && post.comments.length">
-            <v-list-item
-              v-for="(comment, idx) in post.comments"
-              :key="idx"
-              class="mb-2"
-            >
-               <v-list-item-title class="font-weight-bold text-body-2">
-                 {{ formatAuthor(comment.user_name || comment.user) }}
-                 <span class="text-caption text-medium-emphasis ml-2">{{ formatDate(comment.created_at) }}</span>
-               </v-list-item-title>
-               <p class="text-body-2 mt-1">{{ comment.comment_text }}</p>
-            </v-list-item>
-          </v-list>
-          <p v-else class="text-medium-emphasis mb-4">No comments yet. Be the first to share your thoughts!</p>
+           <div v-if="isAuthenticated">
+             <form @submit.prevent="submitComment" id="commentForm">
+               <div v-if="commentError" class="alert alert-danger">{{ commentError }}</div>
+               <div class="mb-3">
+                 <label for="comment_text" class="form-label">Leave a comment</label>
+                 <textarea v-model="newComment" class="form-control" id="comment_text" rows="3" required></textarea>
+               </div>
+               <button type="submit" class="btn btn-brand-primary" :disabled="submitting">
+                 <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
+                 Post Comment
+               </button>
+             </form>
+           </div>
+           <div v-else class="alert alert-info">
+              Please <router-link to="/login">login</router-link> to leave a comment.
+           </div>
+         </div>
+       </div>
 
-          <v-divider class="my-4"></v-divider>
-
-          <div v-if="isAuthenticated">
-            <h4 class="text-subtitle-1 mb-2">Leave a comment</h4>
-            <v-form @submit.prevent="submitComment">
-              <v-textarea
-                v-model="newComment"
-                variant="outlined"
-                rows="3"
-                label="Your comment"
-                hide-details
-                class="mb-3"
-              ></v-textarea>
-              <v-btn type="submit" color="primary" :loading="submitting">Post Comment</v-btn>
-            </v-form>
-          </div>
-          <v-alert v-else type="info" variant="tonal" class="mt-4">
-            <router-link to="/login" class="text-decoration-none font-weight-bold">Log in</router-link> to leave a comment.
-          </v-alert>
-        </v-card-text>
-      </v-card>
+       <div class="mt-4">
+          <router-link to="/blog" class="btn btn-outline-secondary">Back to Blog</router-link>
+       </div>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -79,6 +75,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const newComment = ref('');
 const submitting = ref(false);
+const commentError = ref<string | null>(null);
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
@@ -89,7 +86,7 @@ function formatDate(dateStr?: string) {
 
 function formatAuthor(author: string | { name?: string; fullName?: string; username?: string } | undefined) {
   if (typeof author === 'string') return author;
-  return author?.name || author?.fullName || author?.username || 'Grizzly Author';
+  return author?.name || author?.fullName || author?.username || 'Grizzly Coach';
 }
 
 function getContent(content: string | { text?: string } | undefined) {
@@ -110,6 +107,7 @@ async function loadPost() {
 async function submitComment() {
   if (!newComment.value.trim() || !post.value || !authStore.user?.id) return;
   submitting.value = true;
+  commentError.value = null;
   try {
     await createBlogComment({
       post_id: post.value.id,
@@ -121,7 +119,7 @@ async function submitComment() {
     await loadPost(); // Reload to see new comment
   } catch (e) {
     console.error(e);
-    alert('Failed to post comment');
+    commentError.value = 'Failed to post comment';
   } finally {
     submitting.value = false;
   }
@@ -132,9 +130,3 @@ onMounted(async () => {
   loading.value = false;
 });
 </script>
-
-<style scoped>
-.whitespace-pre-wrap {
-  white-space: pre-wrap;
-}
-</style>

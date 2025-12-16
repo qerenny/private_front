@@ -1,40 +1,29 @@
 <template>
-  <v-container>
-    <h1 class="text-h4 font-weight-bold mb-6">Blog</h1>
+  <div class="container py-5">
+    <h1 class="display-6 fw-bold mb-5">Blog</h1>
 
-    <div v-if="loading" class="d-flex justify-center py-12">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
     </div>
 
-    <v-alert v-else-if="error" type="error">{{ error }}</v-alert>
+    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-    <v-row v-else>
-      <v-col
-        v-for="post in posts"
-        :key="post.id"
-        cols="12"
-        md="6"
-        lg="4"
-      >
-        <v-card class="h-100 d-flex flex-column" hover :to="'/blog/' + post.id">
-          <v-card-item>
-            <div class="text-caption text-medium-emphasis mb-1">
-              {{ formatDate(post.created_at) }}
+    <div v-else class="row g-4" id="blogList">
+       <div v-if="!posts.length" class="col-12 text-center text-muted">
+         <p>No posts yet.</p>
+       </div>
+       <div v-for="post in posts" :key="post.id" class="col-md-6 col-lg-4">
+          <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">{{ post.title }}</h5>
+              <p class="card-text text-muted small">{{ formatDate(post.created_at) }}</p>
+              <p class="card-text flex-grow-1">{{ getPreview(post.content) }}</p>
+              <router-link class="btn btn-sm btn-brand-primary mt-auto align-self-start" :to="'/blog/' + post.id">Read more</router-link>
             </div>
-            <v-card-title>{{ post.title }}</v-card-title>
-          </v-card-item>
-
-          <v-card-text class="flex-grow-1">
-            {{ getPreview(post.content) }}
-          </v-card-text>
-
-          <v-card-actions class="mt-auto">
-            <v-btn variant="text" color="primary">Read More</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+          </div>
+       </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
