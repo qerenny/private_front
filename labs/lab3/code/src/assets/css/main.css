@@ -348,12 +348,23 @@ input, select, textarea, .form-control, .form-select {
 }
 
 .dashboard-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   background-color: var(--bg-card);
-  border: none;
+  border: black;
   box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
+}
+
+/* Эффект при наведении, характерный для дашбордов */
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-title {
+  color: var(--bs-heading-color, inherit);
 }
 
 .avatar-circle {
