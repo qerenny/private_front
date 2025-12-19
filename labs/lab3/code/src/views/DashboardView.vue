@@ -179,9 +179,15 @@ interface EnrichedPlan {
 }
 
 const authStore = useAuthStore();
+const router = useRouter();
 const progressData = ref<UserProgress[]>([]);
 const enrichedPlans = ref<EnrichedPlan[]>([]);
 const loadingPlans = ref(false); 
+
+function handleLogout() {
+  authStore.logout();
+  router.push('/');
+}
 
 const saving = ref(false);
 const successMsg = ref('');
@@ -216,26 +222,28 @@ function formatDate(dateStr?: string) {
 }
 
 
-function extractPlanTitle(planInfo: any, id: number): string {
-  if (planInfo && typeof planInfo === 'object' && planInfo.training_plan) {
-      const nested = extractPlanTitle(planInfo.training_plan, id);
+function extractPlanTitle(planInfo: unknown, id: number): string {
+  if (planInfo && typeof planInfo === 'object' && 'training_plan' in planInfo) {
+      const nested = extractPlanTitle((planInfo as { training_plan: unknown }).training_plan, id);
       if (nested && nested !== `Plan #${id}`) return nested;
   }
-  if (planInfo?.plan_name) return planInfo.plan_name;
-  if (planInfo?.title) return planInfo.title;
-  if (planInfo?.name) return planInfo.name;
-  if (planInfo?.workout?.title) return planInfo.workout.title;
+  const pi = planInfo as { plan_name?: string; title?: string; name?: string; workout?: { title?: string } };
+  if (pi?.plan_name) return pi.plan_name;
+  if (pi?.title) return pi.title;
+  if (pi?.name) return pi.name;
+  if (pi?.workout?.title) return pi.workout.title;
   
   return `Plan #${id}`;
 }
 
-function extractPlanDescription(planInfo: any): string {
-  if (planInfo && typeof planInfo === 'object' && planInfo.training_plan) {
-      const nested = extractPlanDescription(planInfo.training_plan);
+function extractPlanDescription(planInfo: unknown): string {
+  if (planInfo && typeof planInfo === 'object' && 'training_plan' in planInfo) {
+      const nested = extractPlanDescription((planInfo as { training_plan: unknown }).training_plan);
       if (nested && nested !== 'No description available.') return nested;
   }
-  if (typeof planInfo?.description === 'string' && planInfo.description.trim()) {
-      return planInfo.description.trim();
+  const pi = planInfo as { description?: string };
+  if (typeof pi?.description === 'string' && pi.description.trim()) {
+      return pi.description.trim();
   }
   return 'No description available.';
 }
@@ -276,6 +284,7 @@ async function loadData() {
           description: extractPlanDescription(planInfo)
         };
       } catch (e) {
+        console.error(e);
         return {
           id: p.id!,
           training_plan_id: p.training_plan_id,
