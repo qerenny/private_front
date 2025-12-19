@@ -34,6 +34,12 @@ export async function createUserProgress(payload: Partial<UserProgress>): Promis
   }, true);
 }
 
+export async function deleteUserTrainingPlan(id: number | string): Promise<void> {
+  return apiFetch(`${PROGRESS_API_URL}/user-training-plans/${id}`, {
+    method: 'DELETE',
+  }, true);
+}
+
 export async function updateUserProgress(payload: Partial<UserProgress>): Promise<UserProgress> {
   return apiFetch<UserProgress>(`${PROGRESS_API_URL}/user-progress/`, {
     method: 'POST',

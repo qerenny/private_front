@@ -17,7 +17,7 @@
          <p>No training plans found.</p>
        </div>
        <div v-for="plan in plans" :key="plan.id" class="col-md-6 col-lg-4">
-          <div class="card h-100 training-plan-card">
+          <div class="training-plan-card h-100">
             <div class="card-body d-flex flex-column">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
