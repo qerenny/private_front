@@ -11,7 +11,7 @@
     <div class="dashboard__columns">
       <aside class="dashboard__sidebar p-4">
           <div class="d-flex align-items-center gap-3 mb-3">
-            <div class="bg-warning text-dark fw-bold rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:56px; height:56px; font-size: 1.25rem;">
+            <div class="avatar-circle">
               {{ initials }}
             </div>
             <div class="overflow-hidden">
@@ -34,7 +34,7 @@
 
       <section class="flex-grow-1 dashboard__content">
         
-        <div class="card p-3 mb-3 shadow-sm border-0">
+        <div class="dashboard-card">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0 fw-bold">Progress tracking</h5>
             <span class="badge bg-dark">Live</span>
@@ -114,7 +114,7 @@
           </form>
         </div>
 
-        <div class="card p-3 mb-3 shadow-sm border-0">
+        <div class="dashboard-card">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="mb-0 fw-bold">Your training plans</h5>
             <router-link to="/training-plans" class="btn btn-sm btn-outline-dark">Explore plans</router-link>
@@ -135,6 +135,9 @@
                     <router-link :to="'/training-plans/' + plan.training_plan_id" class="btn btn-sm btn-brand-primary">
                       View plan
                     </router-link>
+                    <button class="btn btn-sm btn-outline-danger" @click="removePlan(plan.id)">
+                      Remove
+                    </button>
                   </div>
                 </li>
               </ul>
@@ -143,7 +146,7 @@
           </div>
         </div>
 
-        <div class="card p-3 shadow-sm border-0">
+        <div class="dashboard-card">
           <h5 class="mb-2 fw-bold">Need inspiration?</h5>
           <p class="text-muted small">Head to workouts search and the blog to keep the fire burning.</p>
           <div class="d-flex gap-2 flex-wrap">
@@ -167,6 +170,7 @@ import {
   updateUserProgress, 
   getUserTrainingPlans, 
   getTrainingPlan,     // <--- Добавлено
+  deleteUserTrainingPlan,
   type UserProgress 
 } from '@/api/progress';
 
@@ -319,6 +323,17 @@ async function saveProgress() {
     errorMsg.value = 'Failed to save progress';
   } finally {
     saving.value = false;
+  }
+}
+
+async function removePlan(id: number) {
+  if (!confirm('Are you sure you want to remove this plan from your dashboard?')) return;
+  try {
+    await deleteUserTrainingPlan(id);
+    await loadData();
+  } catch (e) {
+    console.error(e);
+    alert('Failed to remove plan');
   }
 }
 
