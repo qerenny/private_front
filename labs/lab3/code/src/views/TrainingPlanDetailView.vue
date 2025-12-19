@@ -1,55 +1,59 @@
 <template>
-  <v-container>
-    <div v-if="loading" class="d-flex justify-center py-12">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+  <div class="container py-5">
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
     </div>
 
-    <v-alert v-else-if="error" type="error">{{ error }}</v-alert>
+    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-    <div v-else-if="plan">
-      <v-btn variant="text" prepend-icon="mdi-arrow-left" to="/training-plans" class="mb-4">Back to Plans</v-btn>
+    <div v-else-if="plan" id="trainingPlanDetail">
+       <div class="card border-0 shadow-sm mb-5">
+         <div class="card-body p-4">
+           <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+             <div>
+               <h2 class="section-title mb-2">{{ plan.title || plan.plan_name || plan.name }}</h2>
+               <p class="text-muted mb-0">{{ workouts.length || 'No' }} workouts included</p>
+             </div>
+             <span class="card-tag card-tag--accent">Training plan</span>
+           </div>
 
-      <v-card class="mb-6">
-        <v-card-text>
-          <div class="d-flex justify-space-between align-center mb-4">
-             <h1 class="text-h4 font-weight-bold">{{ plan.title || plan.plan_name || plan.name }}</h1>
-             <v-btn
-               v-if="isAuthenticated && !isJoined"
-               color="primary"
-               @click="handleJoin"
-               :loading="joining"
-             >
-               Add to My Plans
-             </v-btn>
-             <v-chip v-else-if="isJoined" color="success" prepend-icon="mdi-check">Added to your plans</v-chip>
-          </div>
-          <p class="text-body-1">{{ plan.description }}</p>
-        </v-card-text>
-      </v-card>
+           <p class="lead mb-4">{{ plan.description || 'No description provided.' }}</p>
 
-      <h2 class="text-h5 font-weight-bold mb-4">Workouts in this Plan</h2>
-      <v-list border rounded>
-        <v-list-item
-          v-for="workout in workouts"
-          :key="workout.id"
-          :to="'/workouts/' + workout.id"
-          link
-          lines="two"
-        >
-          <v-list-item-title class="font-weight-bold">{{ workout.title }}</v-list-item-title>
-          <v-list-item-subtitle>
-             {{ workout.workout_type }} · {{ workout.level }} · {{ workout.duration_min }} min
-          </v-list-item-subtitle>
-          <template v-slot:append>
-             <v-icon icon="mdi-chevron-right"></v-icon>
-          </template>
-        </v-list-item>
-        <v-list-item v-if="!workouts.length">
-          <v-list-item-title class="text-medium-emphasis">No workouts linked to this plan yet.</v-list-item-title>
-        </v-list-item>
-      </v-list>
+           <div class="mb-4">
+              <button
+                 v-if="isAuthenticated && !isJoined"
+                 class="btn btn-brand-primary"
+                 id="addTrainingPlanButton"
+                 @click="handleJoin"
+                 :disabled="joining"
+               >
+                  <span v-if="joining" class="spinner-border spinner-border-sm me-1"></span>
+                  Add to My Plans
+               </button>
+               <button v-else-if="isAuthenticated && isJoined" class="btn btn-secondary" disabled>Already in your plans</button>
+               <router-link v-else class="btn btn-brand-primary" to="/login">Log in to add</router-link>
+           </div>
+
+           <h6 class="fw-bold border-bottom pb-2 mb-3">Workouts in this plan</h6>
+           <ul class="list-group list-group-flush">
+              <li v-for="workout in workouts" :key="workout.id" class="list-group-item px-0">
+                 <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong>{{ workout.title }}</strong>
+                      <p class="mb-0 text-muted small">{{ workout.workout_type || 'mixed' }} · {{ workout.level || 'all levels' }} · {{ workout.duration_min || 0 }} min</p>
+                    </div>
+                    <router-link class="btn btn-sm btn-outline-dark" :to="'/workouts/' + workout.id">View workout</router-link>
+                 </div>
+              </li>
+              <li v-if="!workouts.length" class="list-group-item px-0 text-muted">No workouts linked yet.</li>
+           </ul>
+         </div>
+       </div>
+       <div>
+         <router-link to="/training-plans" class="btn btn-outline-secondary">Back to Plans</router-link>
+       </div>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

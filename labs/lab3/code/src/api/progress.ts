@@ -1,4 +1,4 @@
-import { apiFetch, PROGRESS_API_URL } from './client';
+import { apiFetch, PROGRESS_API_URL, WORKOUT_API_URL } from './client';
 
 export interface UserProgress {
   id: number;
@@ -9,6 +9,12 @@ export interface UserProgress {
   water_intake?: number;
   created_at?: string;
   updated_at?: string;
+}
+export interface TrainingPlan {
+  id: number;
+  title?: string;
+  plan_name?: string;
+  description?: string;
 }
 
 export interface UserTrainingPlan {
@@ -34,6 +40,11 @@ export async function updateUserProgress(payload: Partial<UserProgress>): Promis
     body: JSON.stringify(payload),
   }, true);
 }
+
+export async function getTrainingPlan(id: string | number): Promise<TrainingPlan> {
+  return apiFetch<TrainingPlan>(`${WORKOUT_API_URL}/training-plans/${id}`);
+}
+
 
 export async function getUserTrainingPlans(): Promise<UserTrainingPlan[]> {
   return apiFetch<UserTrainingPlan[]>(`${PROGRESS_API_URL}/user-training-plans/`, {}, true);
