@@ -1,13 +1,13 @@
 <template>
   <div>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary fixed-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top shadow-sm">
       <div class="container">
         <router-link class="navbar-brand d-flex align-items-center gap-2 fw-bold" to="/">
-          <svg class="icon-brand" width="32" height="32">
-            <use href="/assets/sprite.svg#icon-paw"></use>
+          <svg class="me-2" style="height: 38px; width: 80px;" role="img" aria-label="Grizzly Gym logo">
+            <use href="/assets/sprite.svg#logo-grizzly-gym"></use>
           </svg>
-          Grizzly Fitness
+          Grizzly Gym
         </router-link>
         <button
           class="navbar-toggler"
@@ -148,5 +148,12 @@ body {
 }
 .main-content {
   min-height: calc(100vh - 70px - 100px); /* rough estimate for footer/header */
+}
+.icon-theme{
+  color: white; /* Иконка станет оранжевой */
+  fill: currentColor;
+}
+.icon-theme:hover {
+  color: orange;
 }
 </style>

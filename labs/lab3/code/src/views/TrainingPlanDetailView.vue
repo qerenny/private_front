@@ -42,7 +42,7 @@
                       <strong>{{ workout.title }}</strong>
                       <p class="mb-0 text-muted small">{{ workout.workout_type || 'mixed' }} · {{ workout.level || 'all levels' }} · {{ workout.duration_min || 0 }} min</p>
                     </div>
-                    <router-link class="small" :to="'/workouts/' + workout.id">View workout</router-link>
+                    <router-link class="btn btn-sm btn-outline-dark" :to="'/workouts/' + workout.id">View workout</router-link>
                  </div>
               </li>
               <li v-if="!workouts.length" class="list-group-item px-0 text-muted">No workouts linked yet.</li>

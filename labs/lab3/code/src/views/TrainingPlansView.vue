@@ -1,7 +1,13 @@
 <template>
   <div class="container py-5">
-    <h1 class="display-6 fw-bold mb-5">Training Plans</h1>
-
+    <h1 class="section-title mb-0">Training Plans</h1>
+    <p class="text-muted">Choose complete programs that bundle multiple workouts.</p>
+    <div class="card mb-4">
+      <div class="card-body">
+        <p class="mb-0">Add ready-made plans to your account. Each plan includes several workouts curated for progression.</p>
+      </div>
+    </div>
+    
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
     </div>

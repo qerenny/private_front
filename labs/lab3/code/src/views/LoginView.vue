@@ -1,6 +1,6 @@
 <template>
-  <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
+  <div class="auth-wrapper" style="min-height: 80vh;">
+    <div class="card auth-card shadow-lg p-4" style="max-width: 400px; width: 100%;">
       <div class="card-body">
         <h3 class="card-title text-center mb-4 fw-bold">Login</h3>
 

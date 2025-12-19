@@ -1,26 +1,47 @@
 <template>
-  <div class="container py-5">
-    <div class="d-flex align-items-center mb-5">
-      <div class="user-initials-badge user-initials-badge--lg me-3" id="userInitials">{{ initials }}</div>
+  <div class="container py-4 dashboard">
+    <div class="d-flex justify-content-between align-items-center">
       <div>
-        <h1 class="display-5 fw-bold mb-0">Welcome back, <span id="userName">{{ authStore.userName }}</span></h1>
-        <p class="text-muted mb-0" id="userEmail">{{ authStore.user?.email }}</p>
+        <h1 class="h2 mb-0 fw-bold">Your den</h1>
+        <p class="text-muted mb-0">Manage your progress and training plans.</p>
       </div>
+      <router-link to="/workouts" class="btn btn-brand-primary">Browse workouts</router-link>
     </div>
 
-    <div class="row g-4">
-      <!-- Progress Section -->
-      <div class="col-lg-8">
-        <div class="card h-100 shadow-sm">
-          <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold">Your Progress</h5>
-            <span v-if="latestProgress" class="badge bg-success bg-opacity-10 text-success">
-              Last updated: {{ formatDate(latestProgress.updated_at || latestProgress.created_at) }}
-            </span>
+    <div class="dashboard__columns">
+      <aside class="dashboard__sidebar p-4">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="bg-warning text-dark fw-bold rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:56px; height:56px; font-size: 1.25rem;">
+              {{ initials }}
+            </div>
+            <div class="overflow-hidden">
+              <h5 class="mb-1 text-truncate">{{ authStore.userName || 'Athlete' }}</h5>
+              <p class="mb-0 text-muted small text-truncate">{{ authStore.user?.email }}</p>
+            </div>
           </div>
-          <div class="card-body">
-            <div id="progressContainer">
-              <div v-if="latestProgress" class="progress-card">
+          <div class="d-flex flex-column gap-2 mt-auto">
+            <router-link class="btn btn-sm btn-outline-dark" to="/workouts">
+              <i class="bi bi-search me-2"></i>Find workouts
+            </router-link>
+            <router-link class="btn btn-sm btn-outline-dark" to="/blog">
+              <i class="bi bi-journal-text me-2"></i>Read the blog
+            </router-link>
+            <button class="btn btn-sm btn-brand-primary" @click="handleLogout">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </div>
+      </aside>
+
+      <section class="flex-grow-1 dashboard__content">
+        
+        <div class="card p-3 mb-3 shadow-sm border-0">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0 fw-bold">Progress tracking</h5>
+            <span class="badge bg-dark">Live</span>
+          </div>
+
+          <div id="progressContainer">
+             <div v-if="latestProgress" class="progress-card">
                 <div class="d-flex justify-content-between">
                   <div>
                     <p class="mb-1 text-muted">Current weight</p>
@@ -41,102 +62,127 @@
                     <h6>{{ latestProgress.water_intake ?? 0 }} L</h6>
                   </div>
                 </div>
-                <p class="text-muted small mb-0 mt-3">Last updated: {{ formatDate(latestProgress.updated_at || latestProgress.created_at) }}</p>
-              </div>
-              <p v-else class="mb-2">No progress yet. Log your first update below to start tracking.</p>
-            </div>
-
-            <hr class="my-4">
-
-            <h6 class="fw-bold mb-3">Log Update</h6>
-            <div v-if="successMsg" class="alert alert-success">{{ successMsg }}</div>
-            <div v-if="errorMsg" class="alert alert-danger">{{ errorMsg }}</div>
-
-            <form @submit.prevent="saveProgress" id="progressForm" class="row g-3">
-              <div class="col-sm-3">
-                <label for="current_weight" class="form-label small text-muted">Weight (kg)</label>
-                <input v-model.number="form.current_weight" type="number" class="form-control form-control-sm" id="current_weight" step="0.1">
-              </div>
-              <div class="col-sm-3">
-                <label for="target_weight" class="form-label small text-muted">Target (kg)</label>
-                <input v-model.number="form.target_weight" type="number" class="form-control form-control-sm" id="target_weight" step="0.1">
-              </div>
-              <div class="col-sm-3">
-                <label for="steps_walked" class="form-label small text-muted">Steps</label>
-                <input v-model.number="form.steps_walked" type="number" class="form-control form-control-sm" id="steps_walked">
-              </div>
-              <div class="col-sm-3">
-                <label for="water_intake" class="form-label small text-muted">Water (L)</label>
-                <input v-model.number="form.water_intake" type="number" class="form-control form-control-sm" id="water_intake" step="0.1">
-              </div>
-              <div class="col-12 mt-3">
-                <button type="submit" class="btn btn-sm btn-dark" :disabled="saving">
-                  {{ latestProgress ? 'Log new progress' : 'Save first progress entry' }}
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- History -->
-          <div class="card-footer bg-light-subtle border-top-0">
-             <div id="progressHistory">
-                <div v-if="history.length" class="mt-3">
-                  <h6 class="fw-bold mb-2">Recent updates</h6>
-                  <ul class="list-unstyled mb-0">
-                    <li v-for="record in history" :key="record.id" class="d-flex justify-content-between align-items-start py-2 border-bottom small gap-3">
-                      <div class="flex-grow-1">
-                        <div class="fw-semibold">{{ record.current_weight ?? '-' }} kg</div>
-                        <div class="text-muted">Target: {{ record.target_weight ?? '-' }} kg</div>
-                        <div class="text-muted">Steps: {{ record.steps_walked ?? 0 }} · Water: {{ record.water_intake ?? 0 }} L</div>
-                      </div>
-                      <div class="text-end text-muted">
-                        {{ formatDate(record.updated_at || record.created_at) }}
-                        <span v-if="record.id === latestProgress?.id" class="badge bg-dark ms-2">Latest</span>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-                <p v-else class="text-muted small mb-0">No previous updates yet.</p>
+                <p class="text-muted small mb-0 mt-3">
+                  Last updated: {{ formatDate(latestProgress.updated_at || latestProgress.created_at) }}
+                </p>
              </div>
+             <p v-else class="mb-2 text-muted">No progress yet. Log your first update below.</p>
           </div>
-        </div>
-      </div>
 
-      <!-- Training Plans -->
-      <div class="col-lg-4">
-        <div class="card h-100 shadow-sm">
-          <div class="card-header bg-transparent border-0">
-            <h5 class="mb-0 fw-bold">My Training Plans</h5>
+          <div class="mt-3" v-if="history.length">
+             <hr class="text-muted opacity-25">
+             <h6 class="fw-bold mb-2">Recent updates</h6>
+             <ul class="list-unstyled mb-0">
+                <li v-for="record in history" :key="record.id" class="d-flex justify-content-between align-items-start py-2 border-bottom small gap-3">
+                  <div class="flex-grow-1">
+                    <span class="fw-semibold">{{ record.current_weight ?? '-' }} kg</span>
+                    <span class="text-muted mx-1">/</span>
+                    <span class="text-muted">{{ record.steps_walked ?? 0 }} steps</span>
+                  </div>
+                  <div class="text-end text-muted">
+                    {{ formatDate(record.updated_at || record.created_at) }}
+                  </div>
+                </li>
+             </ul>
           </div>
-          <div id="trainingPlansContainer">
-            <ul v-if="userPlans.length" class="list-group list-group-flush">
-              <li v-for="plan in userPlans" :key="plan.id" class="list-group-item d-flex flex-column">
-                <strong>{{ getPlanTitle(plan.training_plan_id) }}</strong>
-                <small class="text-muted">Plan #{{ plan.training_plan_id }}</small>
-                <div class="mt-2 d-flex gap-2">
-                  <router-link class="btn btn-sm btn-brand-primary" :to="'/training-plans/' + plan.training_plan_id">View plan</router-link>
-                </div>
-              </li>
-            </ul>
-            <p v-else class="p-3 mb-0">No training plans linked yet.</p>
+
+          <div v-if="successMsg" class="alert alert-success mt-3 py-2 small">{{ successMsg }}</div>
+          <div v-if="errorMsg" class="alert alert-danger mt-3 py-2 small">{{ errorMsg }}</div>
+
+          <form @submit.prevent="saveProgress" class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label for="current_weight" class="form-label small text-muted mb-1">Current weight (kg)</label>
+              <input v-model.number="form.current_weight" type="number" class="form-control" id="current_weight" step="0.1">
+            </div>
+            <div class="col-md-6">
+              <label for="target_weight" class="form-label small text-muted mb-1">Target weight (kg)</label>
+              <input v-model.number="form.target_weight" type="number" class="form-control" id="target_weight" step="0.1">
+            </div>
+            <div class="col-md-6">
+              <label for="steps_walked" class="form-label small text-muted mb-1">Steps walked</label>
+              <input v-model.number="form.steps_walked" type="number" class="form-control" id="steps_walked">
+            </div>
+            <div class="col-md-6">
+              <label for="water_intake" class="form-label small text-muted mb-1">Water intake (L)</label>
+              <input v-model.number="form.water_intake" type="number" class="form-control" id="water_intake" step="0.1">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-brand-primary w-100 w-md-auto" :disabled="saving">
+                {{ saving ? 'Saving...' : 'Update progress' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-3 mb-3 shadow-sm border-0">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0 fw-bold">Your training plans</h5>
+            <router-link to="/training-plans" class="btn btn-sm btn-outline-dark">Explore plans</router-link>
           </div>
-          <div v-if="!userPlans.length" class="card-body">
-             <router-link to="/training-plans" class="btn btn-outline-dark w-100">Find a Plan</router-link>
+          
+          <div class="small">
+              <div v-if="loadingPlans" class="text-center py-3 text-muted">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Loading...
+              </div>
+
+              <ul v-else-if="enrichedPlans.length" class="list-group list-group-flush">
+                <li v-for="plan in enrichedPlans" :key="plan.id" class="list-group-item d-flex flex-column px-0 py-3 border-bottom">
+                  <strong>{{ plan.title }}</strong>
+                  <small class="text-muted mb-2">{{ plan.description }}</small>
+                  
+                  <div class="d-flex gap-2">
+                    <router-link :to="'/training-plans/' + plan.training_plan_id" class="btn btn-sm btn-brand-primary">
+                      View plan
+                    </router-link>
+                  </div>
+                </li>
+              </ul>
+              
+              <p v-else class="text-muted mb-0">No training plans linked yet.</p>
           </div>
         </div>
-      </div>
+
+        <div class="card p-3 shadow-sm border-0">
+          <h5 class="mb-2 fw-bold">Need inspiration?</h5>
+          <p class="text-muted small">Head to workouts search and the blog to keep the fire burning.</p>
+          <div class="d-flex gap-2 flex-wrap">
+            <router-link class="btn btn-sm btn-brand-primary" to="/workouts">Search workouts</router-link>
+            <router-link class="btn btn-sm btn-outline-dark" to="/blog">Read blog</router-link>
+          </div>
+        </div>
+
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { getUserProgress, updateUserProgress, getUserTrainingPlans, type UserProgress, type UserTrainingPlan } from '@/api/progress';
+// !Важно: Добавьте getTrainingPlan в импорты
+import { 
+  getUserProgress, 
+  updateUserProgress, 
+  getUserTrainingPlans, 
+  getTrainingPlan,     // <--- Добавлено
+  type UserProgress 
+} from '@/api/progress';
+
+// Интерфейс для отображения (обогащенный план)
+interface EnrichedPlan {
+  id: number; // ID связи
+  training_plan_id: number;
+  title: string;
+  description: string;
+}
 
 const authStore = useAuthStore();
 const progressData = ref<UserProgress[]>([]);
-const userPlans = ref<UserTrainingPlan[]>([]);
+const enrichedPlans = ref<EnrichedPlan[]>([]);
+const loadingPlans = ref(false); 
+
 const saving = ref(false);
 const successMsg = ref('');
 const errorMsg = ref('');
@@ -148,6 +194,7 @@ const form = ref({
   water_intake: undefined as number | undefined
 });
 
+// Initials Logic
 const initials = computed(() => {
   return (authStore.userName || 'GG')
     .split(' ')
@@ -158,43 +205,53 @@ const initials = computed(() => {
 });
 
 const latestProgress = computed(() => progressData.value[0]);
-// Exclude the latest one from history if desired, or show all. Lab 1 showed all in history list but highlighted latest.
-// But the sort order was desc.
-const history = computed(() => progressData.value.slice(0, 7));
+const history = computed(() => progressData.value.slice(1, 4));
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleString(undefined, {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit'
   });
 }
 
-function getPlanTitle(id: number) {
-  // In a real app we would fetch the plan details or have them in store.
-  // For now, mirroring Lab 1 fallback behavior
+
+function extractPlanTitle(planInfo: any, id: number): string {
+  if (planInfo && typeof planInfo === 'object' && planInfo.training_plan) {
+      const nested = extractPlanTitle(planInfo.training_plan, id);
+      if (nested && nested !== `Plan #${id}`) return nested;
+  }
+  if (planInfo?.plan_name) return planInfo.plan_name;
+  if (planInfo?.title) return planInfo.title;
+  if (planInfo?.name) return planInfo.name;
+  if (planInfo?.workout?.title) return planInfo.workout.title;
+  
   return `Plan #${id}`;
 }
 
+function extractPlanDescription(planInfo: any): string {
+  if (planInfo && typeof planInfo === 'object' && planInfo.training_plan) {
+      const nested = extractPlanDescription(planInfo.training_plan);
+      if (nested && nested !== 'No description available.') return nested;
+  }
+  if (typeof planInfo?.description === 'string' && planInfo.description.trim()) {
+      return planInfo.description.trim();
+  }
+  return 'No description available.';
+}
+
+
 async function loadData() {
   if (!authStore.user?.id) return;
+  
   try {
-    const [progress, plans] = await Promise.all([
-      getUserProgress(),
-      getUserTrainingPlans()
-    ]);
-
-    // Client-side filter
+    // 1. Загружаем прогресс
+    const progress = await getUserProgress();
     progressData.value = progress
       .filter(p => String(p.user_id) === String(authStore.user?.id))
       .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime());
 
-    userPlans.value = plans.filter(p => String(p.user_id) === String(authStore.user?.id));
-
+    // Заполняем форму
     if (latestProgress.value) {
       form.value = {
         current_weight: latestProgress.value.current_weight,
@@ -203,8 +260,35 @@ async function loadData() {
         water_intake: latestProgress.value.water_intake
       };
     }
+
+    loadingPlans.value = true;
+    const allPlans = await getUserTrainingPlans();
+    
+    const myRawPlans = allPlans.filter(p => String(p.user_id) === String(authStore.user?.id));
+
+    enrichedPlans.value = await Promise.all(myRawPlans.map(async (p) => {
+      try {
+        const planInfo = await getTrainingPlan(p.training_plan_id);
+        return {
+          id: p.id!, // ID связи
+          training_plan_id: p.training_plan_id,
+          title: extractPlanTitle(planInfo, p.training_plan_id),
+          description: extractPlanDescription(planInfo)
+        };
+      } catch (e) {
+        return {
+          id: p.id!,
+          training_plan_id: p.training_plan_id,
+          title: `Plan #${p.training_plan_id}`,
+          description: 'Description unavailable'
+        };
+      }
+    }));
+
   } catch (e) {
     console.error('Failed to load dashboard data', e);
+  } finally {
+    loadingPlans.value = false;
   }
 }
 
@@ -220,6 +304,7 @@ async function saveProgress() {
     });
     successMsg.value = 'Progress saved!';
     await loadData();
+    setTimeout(() => successMsg.value = '', 3000);
   } catch (e) {
     console.error(e);
     errorMsg.value = 'Failed to save progress';

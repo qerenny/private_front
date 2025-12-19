@@ -1,29 +1,65 @@
 <template>
   <div class="container py-5">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
-      <h1 class="display-6 fw-bold">Workouts</h1>
+      <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <div>
+          <h1 class="section-title mb-0">Workouts</h1>
+          <p class="text-muted">Browse all workouts for inspiration. Add complete programs from the Training plans page.</p>
+        </div>
+      </div>
 
       <!-- Filters -->
-      <div class="d-flex gap-2 mt-3 mt-md-0">
-        <select v-model="filters.level" class="form-select form-select-sm" aria-label="Filter by Level">
-          <option value="">All Levels</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-        <select v-model="filters.type" class="form-select form-select-sm" aria-label="Filter by Type">
-          <option value="">All Types</option>
-          <option value="strength">Strength</option>
-          <option value="cardio">Cardio</option>
-          <option value="flexibility">Flexibility</option>
-          <option value="hiit">HIIT</option>
-        </select>
-        <select v-model="filters.duration" class="form-select form-select-sm" aria-label="Filter by Duration">
-          <option value="">Any Duration</option>
-          <option value="<20">&lt; 20 min</option>
-          <option value="20-40">20-40 min</option>
-          <option value=">40">&gt; 40 min</option>
-        </select>
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            
+            <div class="col-md-4">
+              <label class="form-label" for="filterLevel">Level</label>
+              <select 
+                id="filterLevel"
+                v-model="filters.level" 
+                class="form-select form-select-sm" 
+                aria-label="Filter by Level"
+              >
+                <option value="">All Levels</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="filterType">Type</label>
+              <select 
+                id="filterType"
+                v-model="filters.type" 
+                class="form-select form-select-sm" 
+                aria-label="Filter by Type"
+              >
+                <option value="">All Types</option>
+                <option value="strength">Strength</option>
+                <option value="cardio">Cardio</option>
+                <option value="flexibility">Flexibility</option>
+                <option value="hiit">HIIT</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="filterDuration">Duration</label>
+              <select 
+                id="filterDuration"
+                v-model="filters.duration" 
+                class="form-select form-select-sm" 
+                aria-label="Filter by Duration"
+              >
+                <option value="">Any Duration</option>
+                <option value="<20">&lt; 20 min</option>
+                <option value="20-40">20-40 min</option>
+                <option value=">40">&gt; 40 min</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -1,52 +1,75 @@
 <template>
   <div>
     <!-- Hero Section -->
-    <header class="hero-section text-center text-white d-flex align-items-center justify-content-center" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/assets/hero-bg.jpg') no-repeat center center / cover; min-height: 60vh;">
+    <header class="hero">
       <div class="container">
-        <h1 class="display-3 fw-bold mb-3">Train Like a Beast</h1>
-        <p class="lead mb-4">Your journey to peak performance starts here. Join the pack.</p>
-        <div class="d-flex gap-3 justify-content-center">
-          <router-link class="btn btn-brand-primary btn-lg px-5" to="/register">Start Free Trial</router-link>
-          <router-link class="btn btn-outline-light btn-lg px-5" to="/workouts">Explore Workouts</router-link>
+        <div class="row align-items-center">
+          <div class="col-lg-7">
+            <div class="hero__content">
+              <div class="hero__badge mb-3">Train like a grizzly</div>
+              <h1 class="display-4 fw-bold text-uppercase">Brutal. Precise. Powerful.</h1>
+              <p class="lead mt-3 mb-4">Grizzly Gym is your digital strength den – plans, workouts, progress and community, all in one brutal yet clean interface.</p>
+                <div class="d-flex hero__cta flex-wrap">
+                  <router-link class="btn btn-brand-primary btn-lg px-5" to="/register">Start Free Trial</router-link>
+                  <router-link class="btn btn-outline-light btn-lg px-5" to="/workouts">Explore Workouts</router-link>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-5 text-center mt-4 mt-lg-0">
+            <svg class="img-fluid" style="height: 460px; width: 100%;" role="img" aria-label="Grizzly bear logo">
+              <use href="/assets/sprite.svg#logo-grizzly-gym"></use>
+            </svg>
+          </div>
         </div>
       </div>
     </header>
 
     <!-- Features -->
-    <section class="py-5">
+    <section class="py-5" id="plans">
       <div class="container">
-        <div class="row g-4">
-          <div class="col-md-4 text-center">
-            <div class="feature-icon bg-brand-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
-              <svg width="32" height="32" fill="currentColor"><use href="/assets/sprite.svg#icon-dumbbell"></use></svg>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <h2 class="section-title mb-0">Why Grizzly Gym</h2>
+          <p class="text-muted mb-0">Tools crafted for relentless athletes.</p>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-3 d-flex">
+            <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+              <span class="feature-card__icon"><i class="bi bi-activity" aria-hidden="true"></i></span>
+              <h5 class="fw-bold">Smart workout plans</h5>
+              <p class="text-muted mb-0">Adaptive programming aligned with your goals.</p>
             </div>
-            <h3>Expert Workouts</h3>
-            <p class="text-muted">Curated plans for every level, from HIIT to Strength.</p>
           </div>
-          <div class="col-md-4 text-center">
-            <div class="feature-icon bg-brand-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
-              <svg width="32" height="32" fill="currentColor"><use href="/assets/sprite.svg#icon-chart"></use></svg>
+          <div class="col-md-6 col-lg-3 d-flex">
+            <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+              <span class="feature-card__icon"><i class="bi bi-graph-up" aria-hidden="true"></i></span>
+              <h5 class="fw-bold">Progress tracking</h5>
+              <p class="text-muted mb-0">Keep weight, steps, water and lifts in one vault.</p>
             </div>
-            <h3>Track Progress</h3>
-            <p class="text-muted">Monitor your stats and see your improvement over time.</p>
           </div>
-          <div class="col-md-4 text-center">
-            <div class="feature-icon bg-brand-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
-              <svg width="32" height="32" fill="currentColor"><use href="/assets/sprite.svg#icon-users"></use></svg>
+          <div class="col-md-6 col-lg-3 d-flex">
+            <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+              <span class="feature-card__icon"><i class="bi bi-camera-video" aria-hidden="true"></i></span>
+              <h5 class="fw-bold">Video workouts</h5>
+              <p class="text-muted mb-0">Coach-led sessions to perfect your form.</p>
             </div>
-            <h3>Community</h3>
-            <p class="text-muted">Join thousands of athletes pushing their limits.</p>
+          </div>
+          <div class="col-md-6 col-lg-3 d-flex">
+            <div class="feature-card p-4 w-100 d-flex flex-column gap-2">
+              <span class="feature-card__icon"><i class="bi bi-heart-pulse" aria-hidden="true"></i></span>
+              <h5 class="fw-bold">Health & nutrition</h5>
+                <p class="text-muted mb-0">Fuel and recovery guidance from pros.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Previews -->
-    <section class="py-5 bg-light-subtle">
+    <section class="py-5">
       <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="section-title">Trending Workouts</h2>
-          <router-link class="btn btn-link link-brand-primary" to="/workouts">View all</router-link>
+          <h2 class="section-title">Featured Workouts</h2>
+          <router-link class="btn btn-sm btn-brand-primary" to="/workouts">Browse all</router-link>
         </div>
         <div class="row g-4" id="workoutsPreview">
            <div v-for="w in featuredWorkouts" :key="w.id" class="col-md-6 col-lg-3">
@@ -69,8 +92,8 @@
     <section class="py-5">
       <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="section-title">Latest from the Blog</h2>
-          <router-link class="btn btn-link link-brand-primary" to="/blog">Read more</router-link>
+          <h2 class="section-title">From the Blog</h2>
+          <router-link class="btn btn-sm btn-brand-primary" to="/blog">Read more</router-link>
         </div>
         <div class="row g-4" id="blogPreview">
            <div v-for="post in recentPosts" :key="post.id" class="col-md-4">
