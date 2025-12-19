@@ -350,7 +350,7 @@ input, select, textarea, .form-control, .form-select {
 .dashboard-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   background-color: var(--bg-card);
-  border: black;
+  border: 1px solid var(--border-color);
   box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
   border-radius: 12px;
   padding: 1rem;
